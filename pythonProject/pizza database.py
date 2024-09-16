@@ -1,4 +1,4 @@
-# creating a pizza db
+# Creating a pizza delivery db yay!
 from sqlalchemy import create_engine, Column, Integer, String, text, DECIMAL
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -9,21 +9,30 @@ HOST = 'localhost'
 PORT = '3306'
 DATABASE = 'pizza_delivery_system'
 
-# Create the database URL
+# Creating the database URL
 DATABASE_URL = f"mysql://{USERNAME}:{PASSWORD}@{HOST}:{PORT}/{DATABASE}"
-# For mysqlclient, use: DATABASE_URL = f"mysql+mysqldb://{USERNAME}:{PASSWORD}@{HOST}:{PORT}/{DATABASE}"
 
+#Creating an engine WHAT IS HAPPENING???
 engine = create_engine(DATABASE_URL)
 
-# Create a base class for declarative models
+# Creating a base class for declarative models WHAT IS HAPPENING???
 Base = declarative_base()
 
-# Define a sample model (optional, if you want to define tables)
+# Create tables in the database WHAT IS THIS???
+Base.metadata.create_all(engine)
+
+# Create a session factory WHAT IS THIS???
+Session = sessionmaker(bind=engine)
+session = Session()
+
+##################################### THE ACTUAL FUN STUFF
+
+# Creating our first table whoopwhoop
 class Pizzas(Base):
     __tablename__ = 'Pizzas'
     pizza_id = Column(Integer, primary_key=True)
     pizza_name = Column(String(50))
-    ingredient_name = Column(String(50))
+    ingredient_name = Column(String(50), foreign_key=True)
 
 #Filling the pizza table
 Margherita = Pizzas(pizza_name = "Margherita")
@@ -37,13 +46,7 @@ Quattro_Formaggi = Pizzas(pizza_name = "Quattro Formaggi")
 Vegana = Pizzas(pizza_name = "Vegana")
 Capricciosa = Pizzas(pizza_name = "Capricciosa")
 
-# Create tables in the database
-Base.metadata.create_all(engine)
-
-# Create a session factory
-Session = sessionmaker(bind=engine)
-session = Session()
-
+#Adding the pizzas to the db
 session.add(Margherita)
 session.add(Marinara)
 session.add(Ortolana)
@@ -55,7 +58,32 @@ session.add(Hawaii)
 session.add(Vegana)
 session.add(Capricciosa)
 
+#the command to push it all through PROBLEM: IT ADDS THE ALREADY COMMITED ONES AGAIN AND GIVES THEM A NEW ID!!!
 session.commit()
+
+#Creating the ingredients table
+class Ingredients(Base):
+    __tablename__ = 'Ingredients'
+    ingredient_id = Column(Integer, primary_key=True)
+    ingredient_name = Column(String(50))
+    ingredient_cost = Column(DECIMAL(5,2))
+    dietary_status = Column(String(50))
+
+#Filling the table with ingredients
+Tomato_Sauce = Ingredients(ingredient_name = "Tomato_Sauce")
+Mozzarella = Ingredients(ingredient_name = "Mozzarella")
+Zucchini = Ingredients(ingredient_name = "Zucchini")
+Eggplant = Ingredients(ingredient_name = "Eggplant")
+Tomatoes = Ingredients(ingredient_name = "Tomatoes")
+Spinach = Ingredients(ingredient_name = "Spinach")
+Gorgonzola = Ingredients(ingredient_name = "Gorgonzola")
+Parmesan = Ingredients(ingredient_name = "Parmesan")
+Fontina = Ingredients(ingredient_name = "Fontina")
+Paprika = Ingredients(ingredient_name = "Paprika")
+Onion = Ingredients(ingredient_name = "Onion")
+Salami = Ingredients(ingredient_name = "Salami")
+Rocket_Salad = Ingredients(ingredient_name = "Rocket_Salad")
+
 # Test the connection and query the database
 try:
     with engine.connect() as connection:
@@ -67,14 +95,3 @@ except Exception as e:
     print(f"An error occurred: {e}")
 finally:
     session.close()
-
-#database is created, let's make tables for the db
-class Ingredients(Base):
-    __tablename__ = 'Ingredients'
-    ingredient_id = Column(Integer, primary_key=True)
-    ingredient_name = Column(String(50))
-    ingredient_cost = Column(DECIMAL(5,2))
-    dietary_status = Column(String(50))
-
-
-#filling the table with ingredients
