@@ -11,9 +11,12 @@ engine = create_engine(DATABASE_URL)
 # Creating a base class for declarative models
 Base = declarative_base()
 
-# Create tables in the database
-Base.metadata.create_all(engine)
-
 # Create a session factory
 Session = sessionmaker(bind=engine)
 session = Session()
+
+# Function to initialize (drop and create) the tables
+def init_db():
+    # This is to always create the tables from scratch
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
