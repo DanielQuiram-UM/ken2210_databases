@@ -3,7 +3,8 @@
 '''
 from sqlalchemy import text
 from models import Pizza, Ingredient
-from database import session
+from database import session, Base, engine
+
 
 # Helper function to check if pizza already exists
 def get_or_create_pizza(pizza_name):
@@ -17,15 +18,18 @@ def get_or_create_pizza(pizza_name):
         return new_pizza
 
 # Helper function to check if ingredient already exists
-def get_or_create_ingredient(ingredient_name):
-    existing_ingredient = session.query(Ingredient).filter_by(ingredient_name=ingredient_name).first()
+def get_or_create_ingredient(ingredient):
+    existing_ingredient = session.query(Ingredient).filter_by(ingredient_name=ingredient.ingredient_name).first()
     if existing_ingredient:
         return existing_ingredient
     else:
-        new_ingredient = Ingredient(ingredient_name=ingredient_name)
+        new_ingredient = Ingredient(ingredient_name=ingredient.ingredient_name, ingredient_cost=ingredient.ingredient_cost,
+                                    dietary_status=ingredient.dietary_status)
         session.add(new_ingredient)
         session.commit()
         return new_ingredient
+
+Base.metadata.create_all(engine)
 
 # Filling the pizza table
 pizzas = ["Margherita", "Marinara", "Ortolana", "Diavola", "Napolitana",
@@ -34,15 +38,22 @@ pizzas = ["Margherita", "Marinara", "Ortolana", "Diavola", "Napolitana",
 for pizza_name in pizzas:
     get_or_create_pizza(pizza_name)
 
-# Filling the ingredients table
-ingredients = [
-    "Tomato_Sauce", "Mozzarella", "Zucchini", "Eggplant", "Tomatoes",
-    "Spinach", "Gorgonzola", "Parmesan", "Fontina", "Paprika", "Onion",
-    "Salami", "Rocket_Salad"
-]
+Tomato_Sauce = Ingredient(ingredient_name = "Tomato_Sauce", ingredient_cost = 2.00, dietary_status = "vegan")
+Mozzarella = Ingredient(ingredient_name = "Mozzarella")
+Zucchini = Ingredient(ingredient_name = "Zucchini")
+Eggplant = Ingredient(ingredient_name = "Eggplant")
+Tomatoes = Ingredient(ingredient_name = "Tomatoes")
+Spinach = Ingredient(ingredient_name = "Spinach")
+Gorgonzola = Ingredient(ingredient_name = "Gorgonzola")
+Parmesan = Ingredient(ingredient_name = "Parmesan")
+Fontina = Ingredient(ingredient_name = "Fontina")
+Paprika = Ingredient(ingredient_name = "Paprika")
+Onion = Ingredient(ingredient_name = "Onion")
+Salami = Ingredient(ingredient_name = "Salami")
+Rocket_Salad = Ingredient(ingredient_name = "Rocket_Salad")
 
-for ingredient_name in ingredients:
-    get_or_create_ingredient(ingredient_name)
+
+get_or_create_ingredient(Tomato_Sauce)
 
 # Test the connection and query the database
 try:

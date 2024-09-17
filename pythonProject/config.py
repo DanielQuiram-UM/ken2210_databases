@@ -3,7 +3,7 @@
 '''
 
 USERNAME = 'root'
-PASSWORD = 'SQLmerel9'
+PASSWORD = '27032002'
 HOST = 'localhost'
 PORT = '3306'
 DATABASE = 'pizza_delivery_system'
