@@ -1,0 +1,22 @@
+# Ignore Python bytecode files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore JetBrains IDEs configuration directory
+.idea/
+
+# Ignore IDE-specific files
+*.iml
+*.iws
+
+# Ignore virtual environment directory
+venv/
+env/
+
+# Ignore .DS_Store files
+.DS_Store
+
+# Ignore specific configuration files in pythonProject directory
+pythonProject/config.py
