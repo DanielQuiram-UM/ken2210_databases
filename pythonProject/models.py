@@ -1,5 +1,5 @@
 '''
-    All SQLAlchemy models and association tables
+    All SQLAlchemy table models and association tables
 '''
 from sqlalchemy import Column, Integer, String, DECIMAL, Table, ForeignKey
 from sqlalchemy.orm import relationship
@@ -27,3 +27,19 @@ class Ingredient(Base):
     ingredient_cost = Column(DECIMAL(5, 2))
     dietary_status = Column(String(50))
     pizzas = relationship("Pizza", secondary=pizza_ingredient_association, back_populates="ingredients")
+
+# TODO: Create Table "Customer"
+
+# TODO: Create Table "Order Information"
+
+# TODO: Create Table "Pizza Order"
+
+# TODO: Create Table "Additional Item"
+
+# TODO: Create Table "Additional Item Order"
+
+# TODO: Create Table "Delivery"
+
+# TODO: Create Table "Delivery Personnel"
+
+# TODO: Create Table "Discount Code"

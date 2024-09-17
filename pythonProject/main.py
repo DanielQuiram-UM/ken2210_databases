@@ -49,7 +49,6 @@ try:
     with session.bind.connect() as connection:
         # Simple query to test the connection
         result = connection.execute(text("SELECT 1"))
-        print(result.fetchall())
 
 except Exception as e:
     print(f"An error occurred: {e}")
