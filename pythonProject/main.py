@@ -40,33 +40,60 @@ pizzas = ["Margherita", "Marinara", "Ortolana", "Diavola", "Napolitana",
 for pizza_name in pizzas:
     get_or_create_pizza(pizza_name)
 
-Tomato_Sauce = Ingredient(ingredient_name="Tomato_Sauce", ingredient_cost=2.00, dietary_status="vegan")
-Mozzarella = Ingredient(ingredient_name="Mozzarella")
-Zucchini = Ingredient(ingredient_name="Zucchini")
-Eggplant = Ingredient(ingredient_name="Eggplant")
-Tomatoes = Ingredient(ingredient_name="Tomatoes")
-Spinach = Ingredient(ingredient_name="Spinach")
-Gorgonzola = Ingredient(ingredient_name="Gorgonzola")
-Parmesan = Ingredient(ingredient_name="Parmesan")
-Fontina = Ingredient(ingredient_name="Fontina")
-Paprika = Ingredient(ingredient_name="Paprika")
-Onion = Ingredient(ingredient_name="Onion")
-Salami = Ingredient(ingredient_name="Salami")
-Rocket_Salad = Ingredient(ingredient_name="Rocket_Salad")
+ingredients = [
+    {"ingredient_name": "Tomato Sauce", "ingredient_cost": 2.00, "dietary_status": "vegan"},
+    {"ingredient_name": "Mozzarella", "ingredient_cost": 3.00, "dietary_status": "vegetarian"},
+    {"ingredient_name": "Zucchini", "ingredient_cost": 1.50, "dietary_status": "vegan"},
+    {"ingredient_name": "Eggplant", "ingredient_cost": 1.70, "dietary_status": "vegan"},
+    {"ingredient_name": "Gorgonzola", "ingredient_cost": 2.50, "dietary_status": "vegetarian"},
+    {"ingredient_name": "Parmesan", "ingredient_cost": 2.00, "dietary_status": "vegetarian"},
+    {"ingredient_name": "Fontina", "ingredient_cost": 2.20, "dietary_status": "vegetarian"},
+    {"ingredient_name": "Paprika", "ingredient_cost": 1.10, "dietary_status": "vegan"},
+    {"ingredient_name": "Onion", "ingredient_cost": 0.80, "dietary_status": "vegan"},
+    {"ingredient_name": "Salami", "ingredient_cost": 3.50, "dietary_status": "non-vegetarian"},
+    {"ingredient_name": "Rocket Salad", "ingredient_cost": 1.80, "dietary_status": "vegan"},
+    {"ingredient_name": "Garlic", "ingredient_cost": 0.50, "dietary_status": "vegan"},
+    {"ingredient_name": "Anchovies", "ingredient_cost": 3.00, "dietary_status": "non-vegetarian"},
+    {"ingredient_name": "Capers", "ingredient_cost": 1.00, "dietary_status": "vegan"},
+    {"ingredient_name": "Ham", "ingredient_cost": 3.20, "dietary_status": "non-vegetarian"},
+    {"ingredient_name": "Mushrooms", "ingredient_cost": 1.50, "dietary_status": "vegan"},
+    {"ingredient_name": "Pineapple", "ingredient_cost": 1.80, "dietary_status": "vegan"},
+    {"ingredient_name": "Artichokes", "ingredient_cost": 2.30, "dietary_status": "vegan"}
+]
 
-get_or_create_ingredient(Tomato_Sauce)
+for ingredient_data in ingredients:
+    ingredient = Ingredient(
+        ingredient_name=ingredient_data['ingredient_name'],
+        ingredient_cost=ingredient_data['ingredient_cost'],
+        dietary_status=ingredient_data['dietary_status']
+    )
+    get_or_create_ingredient(ingredient)
 
-# Test the connection and query the database
-try:
-    with session.bind.connect() as connection:
-        # Simple query to test the connection
-        result = connection.execute(text("SELECT 1"))
+pizza_ingredient_map = {
+    "Margherita": ["Tomato Sauce", "Mozzarella"],
+    "Marinara": ["Tomato Sauce", "Garlic", "Onion"],
+    "Ortolana": ["Tomato Sauce", "Zucchini", "Eggplant", "Paprika"],
+    "Diavola": ["Tomato Sauce", "Mozzarella", "Salami"],
+    "Napolitana": ["Tomato Sauce", "Mozzarella", "Anchovies", "Capers"],
+    "Calzone": ["Mozzarella", "Ham", "Mushrooms", "Tomato Sauce"],
+    "Hawaii": ["Tomato Sauce", "Mozzarella", "Ham", "Pineapple"],
+    "Quattro Formaggi": ["Mozzarella", "Gorgonzola", "Parmesan", "Fontina"],
+    "Vegana": ["Tomato Sauce", "Zucchini", "Paprika", "Mushrooms", "Rocket Salad"],
+    "Capricciosa": ["Tomato Sauce", "Mozzarella", "Ham", "Mushrooms", "Artichokes"]
+}
 
-except Exception as e:
-    print(f"An error occurred: {e}")
-finally:
-    session.close()
+def add_ingredients_to_pizza(pizza_name, ingredient_names):
+    pizza = get_or_create_pizza(pizza_name)
+    for ingredient_name in ingredient_names:
+        ingredient = session.query(Ingredient).filter_by(ingredient_name=ingredient_name).first()
+        if ingredient and ingredient not in pizza.ingredients:
+            pizza.ingredients.append(ingredient)
+    session.commit()
 
+for pizza_name, ingredient_names in pizza_ingredient_map.items():
+    add_ingredients_to_pizza(pizza_name, ingredient_names)
+
+session.close()
 # Defining common methods. These ones have to be implemented at some point
 
 # TODO: Method to calculate the price of one pizza
