@@ -44,7 +44,7 @@ class Customer(Base):
     customer_id = Column(Integer, primary_key=True)
     customer_first_name = Column(String(50), nullable=False)
     customer_last_name = Column(String(50), nullable=False)
-    customer_email = Column(String(50), nullable=False)
+    customer_email = Column(String(50), nullable=False, unique =True)
     gender = Column(String(10), nullable=False)
     date_of_birth = Column(Date, nullable=False)
     phone_number = Column(String(15), nullable=False)

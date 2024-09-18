@@ -2,11 +2,15 @@
     Main logic for interacting with the database
 """
 from sqlalchemy import text
-from models import Pizza, Ingredient
+from models import Pizza, Ingredient, ExtraItem
 from database import session, init_db
 
 # Initialize the database (drop and create tables)
 init_db()
+
+# Filling in the pizza table
+pizzas = ["Margherita", "Marinara", "Ortolana", "Diavola", "Napolitana",
+          "Calzone", "Hawaii", "Quattro Formaggi", "Vegana", "Capricciosa"]
 
 # Helper function to check if pizza already exists
 def get_or_create_pizza(pizza_name):
@@ -19,26 +23,12 @@ def get_or_create_pizza(pizza_name):
         session.commit()
         return new_pizza
 
-
-# Helper function to check if ingredient already exists
-def get_or_create_ingredient(ingredient):
-    existing_ingredient = session.query(Ingredient).filter_by(ingredient_name=ingredient.ingredient_name).first()
-    if existing_ingredient:
-        return existing_ingredient
-    else:
-        new_ingredient = Ingredient(ingredient_name=ingredient.ingredient_name,
-                                    ingredient_cost=ingredient.ingredient_cost,
-                                    dietary_status=ingredient.dietary_status)
-        session.add(new_ingredient)
-        session.commit()
-        return new_ingredient
-
-# Filling the pizza table
-pizzas = ["Margherita", "Marinara", "Ortolana", "Diavola", "Napolitana",
-          "Calzone", "Hawaii", "Quattro Formaggi", "Vegana", "Capricciosa"]
-
+#Create for loop to see ensure that all pizzas in the list are checked
 for pizza_name in pizzas:
     get_or_create_pizza(pizza_name)
+
+#Filling in the ingredients table
+# TODO: add extra ingredients
 
 ingredients = [
     {"ingredient_name": "Tomato Sauce", "ingredient_cost": 2.00, "dietary_status": "vegan"},
@@ -61,6 +51,20 @@ ingredients = [
     {"ingredient_name": "Artichokes", "ingredient_cost": 2.30, "dietary_status": "vegan"}
 ]
 
+# Helper function to check if ingredient already exists
+def get_or_create_ingredient(ingredient):
+    existing_ingredient = session.query(Ingredient).filter_by(ingredient_name=ingredient.ingredient_name).first()
+    if existing_ingredient:
+        return existing_ingredient
+    else:
+        new_ingredient = Ingredient(ingredient_name=ingredient.ingredient_name,
+                                    ingredient_cost=ingredient.ingredient_cost,
+                                    dietary_status=ingredient.dietary_status)
+        session.add(new_ingredient)
+        session.commit()
+        return new_ingredient
+
+#For loop to check that all ingredients in the list are added/in the db
 for ingredient_data in ingredients:
     ingredient = Ingredient(
         ingredient_name=ingredient_data['ingredient_name'],
@@ -77,7 +81,7 @@ pizza_ingredient_map = {
     "Napolitana": ["Tomato Sauce", "Mozzarella", "Anchovies", "Capers"],
     "Calzone": ["Mozzarella", "Ham", "Mushrooms", "Tomato Sauce"],
     "Hawaii": ["Tomato Sauce", "Mozzarella", "Ham", "Pineapple"],
-    "Quattro Formaggi": ["Mozzarella", "Gorgonzola", "Parmesan", "Fontina"],
+    "Quattro Formaggi": ["Tomato Sauce", "Mozzarella", "Gorgonzola", "Parmesan", "Fontina"],
     "Vegana": ["Tomato Sauce", "Zucchini", "Paprika", "Mushrooms", "Rocket Salad"],
     "Capricciosa": ["Tomato Sauce", "Mozzarella", "Ham", "Mushrooms", "Artichokes"]
 }
@@ -86,14 +90,37 @@ def add_ingredients_to_pizza(pizza_name, ingredient_names):
     pizza = get_or_create_pizza(pizza_name)
     for ingredient_name in ingredient_names:
         ingredient = session.query(Ingredient).filter_by(ingredient_name=ingredient_name).first()
-        if ingredient and ingredient not in pizza.ingredients:
+        print(ingredient)
+        if ingredient not in pizza.ingredients:
+            print(" added")
             pizza.ingredients.append(ingredient)
     session.commit()
 
 for pizza_name, ingredient_names in pizza_ingredient_map.items():
     add_ingredients_to_pizza(pizza_name, ingredient_names)
 
+#Creating one fictinal customer so we can check the functionalities of our pizza_delivery_system later
+#The customer info we would usually get from the GUI when they put in an order
+customer = [{"customer_first_name": "Abi", "customer_last_name": "Cole", "customer_email": "abc@gmail.com","gender": "female", "date_of_birth": "01-01-2001", "phone_number": "0123456789"}, "discount_available": "NO"}]
+
+# TODO: use email for get_or_create
+
+#Filling in the extra items table
+extra_items = ["Coca_Cola", "Ice_Tea", "White_Wine", "Red_Wine", "Homemade_Lemonade", "Tiramisu", "Nutella_Pizza"]
+
+def get_or_create_extra_item(extra_item):
+    existing_item = session.query(ExtraItem).filter_by(item_name=extra_item).first()
+    if existing_item:
+        return existing_item
+    else:
+        new_item = ExtraItem(item_name=extra_item)
+        session.add(new_item)
+        session.commit()
+        return new_item
+
+#To end the session
 session.close()
+
 # Defining common methods. These ones have to be implemented at some point
 
 # TODO: Method to calculate the price of one pizza
@@ -104,6 +131,8 @@ def calculate_pizza_price(pizza):
 # TODO: Method to calculate the price of an entire order
 def calculate_order_price(order):
     pass
+
+# TODO: Method to change ingredients on pizza
 
 
 # TODO: Method to create a new customer
@@ -151,4 +180,9 @@ def add_order_to_delivery(pizza):
     pass
 
 
-# TODO: ...
+# TODO:  Method to cancel order within 5 min
+
+# TODO: Method to calculate when someone has a right to a discount
+
+
+# TODO: Method to apply discount code
