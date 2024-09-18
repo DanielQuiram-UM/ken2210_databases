@@ -1,14 +1,24 @@
 '''
     All SQLAlchemy table models and association tables
 '''
-from sqlalchemy import Column, Integer, String, DECIMAL, Table, ForeignKey, Date, Boolean
+from sqlalchemy import Column, Integer, String, DECIMAL, Table, ForeignKey, Date, Boolean, DateTime, \
+    PrimaryKeyConstraint
 from sqlalchemy.orm import relationship
 from database import Base
+from datetime import datetime
+
 
 # Association table to link pizzas and ingredients (many-to-many)
 pizza_ingredient_association = Table(
     'pizza_ingredient', Base.metadata,
     Column('pizza_id', Integer, ForeignKey('pizzas.pizza_id'), primary_key=True),
+    Column('ingredient_id', Integer, ForeignKey('ingredients.ingredient_id'), primary_key=True)
+)
+
+# Association table to link pizzas and ingredients (many-to-many)
+item_ingredient_association = Table(
+    'extra_item_ingredients', Base.metadata,
+    Column('extra_item_id', Integer, ForeignKey('extra_items.item_id'), primary_key=True),
     Column('ingredient_id', Integer, ForeignKey('ingredients.ingredient_id'), primary_key=True)
 )
 
@@ -48,15 +58,82 @@ class Customer(Base):
     password = Column(String(100), nullable=False)  # Adjust length as necessary
 
 # TODO: Create Table "Order Information"
+class Order(Base):
+    __tablename__ = 'orders'
+
+    order_id = Column(Integer, primary_key=True)
+    customer_id = Column(Integer, ForeignKey('customers.customer_id'), nullable=False)
+    delivery_id = Column(Integer, ForeignKey('deliveries.delivery_id'), nullable=True)
+    order_timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
+    discount_applied = Column(Boolean, default=False)
+    order_status = Column(String(50), nullable=False)
+
+    # Define the relationship with the Customer class
+    customer = relationship('Customer', backref='orders')
+    delivery = relationship('Delivery', backref='orders')
 
 # TODO: Create Table "Pizza Order"
+class PizzaOrder(Base):
+    __tablename__ = 'pizza_orders'
+
+    order_id = Column(Integer, ForeignKey('orders.order_id'), nullable=False)
+    pizza_id = Column(Integer, ForeignKey('pizzas.pizza_id'), nullable=False)
+    pizza_amount = Column(Integer, default=1, nullable=False)
+
+    # Composite primary key
+    __table_args__ = (
+        PrimaryKeyConstraint('order_id', 'pizza_id'),
+    )
+
+    # Define relationships (optional)
+    order = relationship('Order', backref='pizza_orders')
+    pizza = relationship('Pizza', backref='pizza_orders')
 
 # TODO: Create Table "Additional Item"
+class ExtraItem(Base):
+    __tablename__ = 'extra_items'
+    item_id = Column(Integer, primary_key=True)
+    item_name = Column(String(50), nullable=False)
+    cost = Column(DECIMAL(5, 2))
 
 # TODO: Create Table "Additional Item Order"
+class ExtraItemOrder(Base):
+    __tablename__ = 'extra_item_orders'
+
+    order_id = Column(Integer, ForeignKey('orders.order_id'), nullable=False)
+    item_id = Column(Integer, ForeignKey('extra_items.item_id'), nullable=False)
+    item_amount = Column(Integer, default=1, nullable=False)
+
+    # Composite primary key
+    __table_args__ = (
+        PrimaryKeyConstraint('order_id', 'item_id'),
+    )
+
+    # Define relationships (optional)
+    order = relationship('Order', backref='extra_item_orders')
+    pizza = relationship('ExtraItem', backref='extra_item_orders')
 
 # TODO: Create Table "Delivery"
+class Delivery(Base):
+    __tablename__ = 'deliveries'
 
-# TODO: Create Table "Delivery Personnel"
+    delivery_id = Column(Integer, primary_key=True)
+    deliverer_id = Column(Integer, ForeignKey('deliverers.deliverer_id'), nullable=False)
+    initiation_time = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Define the relationship with the Deliverer class
+    deliverer = relationship('Deliverer', backref='deliveries')
+
+# TODO: Create Table "Deliverer"
+class Deliverer(Base):
+    __tablename__ = 'deliverers'
+    deliverer_id = Column(Integer, primary_key=True)
+    deliverer_first_name = Column(String(50), nullable=False)
+    deliverer_last_name = Column(String(50), nullable=False)
+    postal_code = Column(String(15), nullable=False)
 
 # TODO: Create Table "Discount Code"
+class DiscountCode(Base):
+    __tablename__ = 'discount_codes'
+    dicsount_code_id = Column(Integer, primary_key=True)
+    discount_string = Column(String(50), nullable=False)
