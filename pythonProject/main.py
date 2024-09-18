@@ -93,17 +93,7 @@ def add_ingredients_to_pizza(pizza_name, ingredient_names):
 for pizza_name, ingredient_names in pizza_ingredient_map.items():
     add_ingredients_to_pizza(pizza_name, ingredient_names)
 
-# Test the connection and query the database
-try:
-    with session.bind.connect() as connection:
-        # Simple query to test the connection
-        result = connection.execute(text("SELECT 1"))
-
-except Exception as e:
-    print(f"An error occurred: {e}")
-finally:
-    session.close()
-
+session.close()
 # Defining common methods. These ones have to be implemented at some point
 
 # TODO: Method to calculate the price of one pizza
