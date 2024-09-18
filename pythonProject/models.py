@@ -1,7 +1,7 @@
 '''
     All SQLAlchemy table models and association tables
 '''
-from sqlalchemy import Column, Integer, String, DECIMAL, Table, ForeignKey
+from sqlalchemy import Column, Integer, String, DECIMAL, Table, ForeignKey, Date, Boolean
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -29,6 +29,23 @@ class Ingredient(Base):
     pizzas = relationship("Pizza", secondary=pizza_ingredient_association, back_populates="ingredients")
 
 # TODO: Create Table "Customer"
+class Customer(Base):
+    __tablename__ = 'customers'
+
+    customer_id = Column(Integer, primary_key=True)
+    customer_first_name = Column(String(50), nullable=False)
+    customer_last_name = Column(String(50), nullable=False)
+    gender = Column(String(10), nullable=False)
+    date_of_birth = Column(Date, nullable=False)
+    phone_number = Column(String(15), nullable=False)
+    # TODO: Maybe abstract the address to get to 3NF
+    street = Column(String(100), nullable=False)
+    city = Column(String(50), nullable=False)
+    country = Column(String(50), nullable=False)
+    postal_code = Column(String(20), nullable=False)
+    discount_available = Column(Boolean, default=False)
+    pizza_discount_count = Column(Integer, default=0)
+    password = Column(String(100), nullable=False)  # Adjust length as necessary
 
 # TODO: Create Table "Order Information"
 
