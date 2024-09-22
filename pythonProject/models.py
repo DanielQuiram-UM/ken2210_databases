@@ -7,14 +7,6 @@ from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
 
-
-# Association table to link pizzas and ingredients (many-to-many)
-pizza_ingredient_association = Table(
-    'pizza_ingredient', Base.metadata,
-    Column('pizza_id', Integer, ForeignKey('pizzas.pizza_id'), primary_key=True),
-    Column('ingredient_id', Integer, ForeignKey('ingredients.ingredient_id'), primary_key=True)
-)
-
 # Association table to link extra items and ingredients (many-to-many)
 item_ingredient_association = Table(
     'extra_item_ingredients', Base.metadata,
@@ -22,14 +14,14 @@ item_ingredient_association = Table(
     Column('ingredient_id', Integer, ForeignKey('ingredients.ingredient_id'), primary_key=True)
 )
 
-# Creating the Pizza table
+# Creating the pizza table
 class Pizza(Base):
     __tablename__ = 'pizzas'
     pizza_id = Column(Integer, primary_key=True)
     pizza_name = Column(String(50))
     ingredients = relationship("Ingredient", secondary=pizza_ingredient_association, back_populates="pizzas")
 
-# Creating the Ingredient table
+# Creating the ingredient table
 class Ingredient(Base):
     __tablename__ = 'ingredients'
     ingredient_id = Column(Integer, primary_key=True)
@@ -37,6 +29,52 @@ class Ingredient(Base):
     ingredient_cost = Column(DECIMAL(5, 2))
     dietary_status = Column(String(50))
     pizzas = relationship("Pizza", secondary=pizza_ingredient_association, back_populates="ingredients")
+
+# Creating the junction table to link pizzas and ingredients (many-to-many)
+pizza_ingredient_association = Table(
+    'pizza_ingredient', Base.metadata,
+    Column('pizza_id', Integer, ForeignKey('pizzas.pizza_id'), primary_key=True),
+    Column('ingredient_id', Integer, ForeignKey('ingredients.ingredient_id'), primary_key=True)
+)
+
+# Creating the pizza suborder table
+class PizzaOrder(Base):
+    __tablename__ = 'pizza_orders'
+    order_id = Column(Integer, ForeignKey('orders.order_id'), nullable=False)
+    pizza_id = Column(Integer, ForeignKey('pizzas.pizza_id'), nullable=False)
+    pizza_amount = Column(Integer, default=1, nullable=False)
+
+# Composite primary keys in joins table (so using 2 foreign keys)
+    __table_args__ = (
+        PrimaryKeyConstraint('order_id', 'pizza_id'),
+    )
+
+# Defining one-many relationships
+    order = relationship('Order', backref='pizza_orders')
+    pizza = relationship('Pizza', backref='pizza_orders')
+
+#Creating the extra item table
+class ExtraItem(Base):
+    __tablename__ = 'extra_items'
+    item_id = Column(Integer, primary_key=True)
+    item_name = Column(String(50), nullable=False)
+    cost = Column(DECIMAL(5, 2))
+
+#Creating the extra items suborder table
+class ExtraItemOrder(Base):
+    __tablename__ = 'extra_item_orders'
+    order_id = Column(Integer, ForeignKey('orders.order_id'), nullable=False)
+    item_id = Column(Integer, ForeignKey('extra_items.item_id'), nullable=False)
+    item_amount = Column(Integer, default=1, nullable=False)
+
+# Composite primary key for the extra item order junction table
+    __table_args__ = (
+        PrimaryKeyConstraint('order_id', 'item_id'),
+    )
+
+ # Defining the one-many relationships
+    order = relationship('Order', backref='extra_item_orders')
+    pizza = relationship('ExtraItem', backref='extra_item_orders')
 
 # Creating the customer table
 class Customer(Base):
@@ -73,45 +111,6 @@ class Order(Base):
     customer = relationship('Customer', backref='orders')
     delivery = relationship('Delivery', backref='orders')
 
-# Creating the pizza suborder table
-class PizzaOrder(Base):
-    __tablename__ = 'pizza_orders'
-    order_id = Column(Integer, ForeignKey('orders.order_id'), nullable=False)
-    pizza_id = Column(Integer, ForeignKey('pizzas.pizza_id'), nullable=False)
-    pizza_amount = Column(Integer, default=1, nullable=False)
-
-# Composite primary keys in joins table (so using 2 foreign keys)
-    __table_args__ = (
-        PrimaryKeyConstraint('order_id', 'pizza_id'),
-    )
-
-# Defining one-many relationships
-    order = relationship('Order', backref='pizza_orders')
-    pizza = relationship('Pizza', backref='pizza_orders')
-
-#Creating the extra item table
-class ExtraItem(Base):
-    __tablename__ = 'extra_items'
-    item_id = Column(Integer, primary_key=True)
-    item_name = Column(String(50), nullable=False)
-    cost = Column(DECIMAL(5, 2))
-
-#Creating the extra items suborder
-class ExtraItemOrder(Base):
-    __tablename__ = 'extra_item_orders'
-    order_id = Column(Integer, ForeignKey('orders.order_id'), nullable=False)
-    item_id = Column(Integer, ForeignKey('extra_items.item_id'), nullable=False)
-    item_amount = Column(Integer, default=1, nullable=False)
-
-# Composite primary key
-    __table_args__ = (
-        PrimaryKeyConstraint('order_id', 'item_id'),
-    )
-
- # Defining the one-many relationships
-    order = relationship('Order', backref='extra_item_orders')
-    pizza = relationship('ExtraItem', backref='extra_item_orders')
-
 #Creating the delivery table
 class Delivery(Base):
     __tablename__ = 'deliveries'
@@ -119,7 +118,7 @@ class Delivery(Base):
     deliverer_id = Column(Integer, ForeignKey('deliverers.deliverer_id'), nullable=False)
     initiation_time = Column(DateTime, default=datetime.utcnow, nullable=False)
 
-    # Define the relationship with the Deliverer class
+#Define the relationship with the Deliverer class
     deliverer = relationship('Deliverer', backref='deliveries')
 
 #Creating the deliverer table
