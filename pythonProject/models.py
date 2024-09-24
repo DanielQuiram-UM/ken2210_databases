@@ -7,6 +7,12 @@ from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
 
+# Creating the junction table to link pizzas and ingredients (many-to-many)
+pizza_ingredient_association = Table(
+    'pizza_ingredient', Base.metadata,
+    Column('pizza_id', Integer, ForeignKey('pizzas.pizza_id'), primary_key=True),
+    Column('ingredient_id', Integer, ForeignKey('ingredients.ingredient_id'), primary_key=True)
+)
 # Creating the pizza table
 class Pizza(Base):
     __tablename__ = 'pizzas'
@@ -18,17 +24,10 @@ class Pizza(Base):
 class Ingredient(Base):
     __tablename__ = 'ingredients'
     ingredient_id = Column(Integer, primary_key=True)
-    ingredient_name = Column(String(50))
+    ingredient_name = Column(String(50), nullable=False)
     ingredient_cost = Column(DECIMAL(5, 2))
     dietary_status = Column(String(50))
     pizzas = relationship("Pizza", secondary=pizza_ingredient_association, back_populates="ingredients")
-
-# Creating the junction table to link pizzas and ingredients (many-to-many)
-pizza_ingredient_association = Table(
-    'pizza_ingredient', Base.metadata,
-    Column('pizza_id', Integer, ForeignKey('pizzas.pizza_id'), primary_key=True),
-    Column('ingredient_id', Integer, ForeignKey('ingredients.ingredient_id'), primary_key=True)
-)
 
 # Creating the pizza suborder table
 class PizzaOrder(Base):
@@ -99,7 +98,6 @@ class Customer(Base):
 # Creating the order information table
 class Order(Base):
     __tablename__ = 'orders'
-
     order_id = Column(Integer, primary_key=True)
     customer_id = Column(Integer, ForeignKey('customers.customer_id'), nullable=False)
     delivery_id = Column(Integer, ForeignKey('deliveries.delivery_id'), nullable=True)

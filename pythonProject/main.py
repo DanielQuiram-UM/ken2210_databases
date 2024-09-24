@@ -31,7 +31,7 @@ for pizza_name in pizzas:
 # TODO: check total costs now since i added pizza dough & check whether we want the drinks as ingredients
 
 ingredients = [
-    {"ingredient_name": "Pizza Dough", "ingredient_cost": 2.00, "dietary_status": "vegetarian"}
+    {"ingredient_name": "Pizza Dough", "ingredient_cost": 2.00, "dietary_status": "vegetarian"},
     {"ingredient_name": "Tomato Sauce", "ingredient_cost": 2.00, "dietary_status": "vegan"},
     {"ingredient_name": "Mozzarella", "ingredient_cost": 3.00, "dietary_status": "vegetarian"},
     {"ingredient_name": "Zucchini", "ingredient_cost": 1.50, "dietary_status": "vegan"},
@@ -49,39 +49,39 @@ ingredients = [
     {"ingredient_name": "Ham", "ingredient_cost": 3.20, "dietary_status": "non-vegetarian"},
     {"ingredient_name": "Mushrooms", "ingredient_cost": 1.50, "dietary_status": "vegan"},
     {"ingredient_name": "Pineapple", "ingredient_cost": 1.80, "dietary_status": "vegan"},
-    {"ingredient_name": "Artichokes", "ingredient_cost": 2.30, "dietary_status": "vegan"}
-    {"ingredient_name": "Coca Cola", "ingredient_cost": 3.00, "dietary_status": "vegan"}
-    {"ingredient_name": "Ice Tea", "ingredient_cost": 3.00, "dietary_status": "vegan"}
-    {"ingredient_name": "White Wine", "ingredient_cost": 3.50, "dietary_status": "vegan"}
-    {"ingredient_name": "Red Wine", "ingredient_cost": 3.50, "dietary_status": "vegan"}
-    {"ingredient_name": "Homemade Lemonade", "ingredient_cost": 3.50, "dietary_status": "vegan"}
-    {"ingredient_name": "Nutella", "ingredient_cost": 2.50, "dietary_status": "vegetarian"}
-    {"ingredient_name": "Cacoa powder", "ingredient_cost": 1.50, "dietary_status": "vegan"}
-    {"ingredient_name": "Ladyfinger cookies", "ingredient_cost": 1.00, "dietary_status": "vegetarian"}
-    {"ingredient_name": "Eggs", "ingredient_cost": 1.00, "dietary_status": "vegetarian"}
-    {"ingredient_name": "Sugar", "ingredient_cost": 0.50, "dietary_status": "vegan"}
+    {"ingredient_name": "Artichokes", "ingredient_cost": 2.30, "dietary_status": "vegan"},
+    {"ingredient_name": "Coca Cola", "ingredient_cost": 3.00, "dietary_status": "vegan"},
+    {"ingredient_name": "Ice Tea", "ingredient_cost": 3.00, "dietary_status": "vegan"},
+    {"ingredient_name": "White Wine", "ingredient_cost": 3.50, "dietary_status": "vegan"},
+    {"ingredient_name": "Red Wine", "ingredient_cost": 3.50, "dietary_status": "vegan"},
+    {"ingredient_name": "Homemade Lemonade", "ingredient_cost": 3.50, "dietary_status": "vegan"},
+    {"ingredient_name": "Nutella", "ingredient_cost": 2.50, "dietary_status": "vegetarian"},
+    {"ingredient_name": "Cacoa powder", "ingredient_cost": 1.50, "dietary_status": "vegan"},
+    {"ingredient_name": "Ladyfinger cookies", "ingredient_cost": 1.00, "dietary_status": "vegetarian"},
+    {"ingredient_name": "Eggs", "ingredient_cost": 1.00, "dietary_status": "vegetarian"},
+    {"ingredient_name": "Sugar", "ingredient_cost": 0.50, "dietary_status": "vegan"},
     {"ingredient_name": "Mascarpone", "ingredient_cost": 1.50, "dietary_status": "vegetarian"}
 ]
 
 # Helper function to check if ingredient already exists
-def get_or_create_ingredient(ingredient):
-    existing_ingredient = session.query(Ingredient).filter_by(ingredient_name=ingredient.ingredient_name).first()
+def get_or_create_ingredient(ingredient_input):
+    existing_ingredient = session.query(Ingredient).filter_by(ingredient_name=ingredient_input.ingredient_name).first()
     if existing_ingredient:
         return existing_ingredient
     else:
-        new_ingredient = Ingredient(ingredient_name=ingredient.ingredient_name,
-                                    ingredient_cost=ingredient.ingredient_cost,
-                                    dietary_status=ingredient.dietary_status)
+        new_ingredient = Ingredient(ingredient_name=ingredient_input.ingredient_name,
+                                    ingredient_cost=ingredient_input.ingredient_cost,
+                                    dietary_status=ingredient_input.dietary_status)
         session.add(new_ingredient)
         session.commit()
         return new_ingredient
 
 #For loop to check that all ingredients in the list are added/in the db
-for ingredient_data in ingredients:
+for ingredient_input in ingredients:
     ingredient = Ingredient(
-        ingredient_name=ingredient_data['ingredient_name'],
-        ingredient_cost=ingredient_data['ingredient_cost'],
-        dietary_status=ingredient_data['dietary_status']
+        ingredient_name=ingredient_input['ingredient_name'],
+        ingredient_cost=ingredient_input['ingredient_cost'],
+        dietary_status=ingredient_input['dietary_status']
     )
     get_or_create_ingredient(ingredient)
 
@@ -102,18 +102,21 @@ pizza_ingredient_map = {
 #Function for customers that want to add ingredients to their pizza
 # TODO: Function to remove ingredients from a pizza
 
+#Function that represents the junction table pizza ingredients
 def add_ingredients_to_pizza(pizza_name, ingredient_names):
     pizza = get_or_create_pizza(pizza_name)
     for ingredient_name in ingredient_names:
         ingredient = session.query(Ingredient).filter_by(ingredient_name=ingredient_name).first()
         print(ingredient)
-        if ingredient not in pizza.ingredients:
+        if ingredient and ingredient not in pizza.ingredients:  #read if there's an ingredient and that pizza is not in the pizza ingredients
             print(" added")
             pizza.ingredients.append(ingredient)
     session.commit()
 
 for pizza_name, ingredient_names in pizza_ingredient_map.items():
     add_ingredients_to_pizza(pizza_name, ingredient_names)
+
+# TODO: rewrite the code add_ingredients_to_pizz to form the pizza_order table
 
 #Filling in the extra items table
 extra_items = ["Coca Cola", "Ice Tea", "White Wine", "Red Wine", "Homemade Lemonade", "Tiramisu", "Nutella Pizza"]
@@ -140,9 +143,21 @@ def get_or_create_extra_item(extra_item):
         session.commit()
         return new_item
 
-#Creating one fictional customer so we can check the functionalities of our pizza_delivery_system later
-#The customer info we would usually get from the GUI when they put in an order
-customer = [{"customer_first_name": "Abi", "customer_last_name": "Cole", "customer_email": "abc@gmail.com","gender": "female", "date_of_birth": "01-01-2001", "phone_number": "0123456789"}, "discount_available": "NO"}]
+# TODO: rewrite this code to form the item_ingreidents table IF tom wants us to keep the junction table
+'''def add_ingredients_to_item(pizza_name, ingredient_names):
+    pizza = get_or_create_pizza(pizza_name)
+    for ingredient_name in ingredient_names:
+        ingredient = session.query(Ingredient).filter_by(ingredient_name=ingredient_name).first()
+        print(ingredient)
+        if ingredient and ingredient not in pizza.ingredients:  #read if there's an ingredient and that pizza is not in the pizza ingredients
+            print(" added")
+            pizza.ingredients.append(ingredient)
+    session.commit()
+
+for pizza_name, ingredient_names in pizza_ingredient_map.items():
+    add_ingredients_to_pizza(pizza_name, ingredient_names)'''
+
+# TODO: rewrite the code above to form the item_order table
 
 # Helper function to check if customer already exists
 def find_or_create_customer(customer_email):
@@ -182,7 +197,7 @@ def find_or_add_deliverer(deliverer_id):
     existing_deliverer = session.query(Deliverer).filter_by(deliverer_id=deliverer_id).first()
     if existing_deliverer:
         return existing_deliverer
-    #So this esle is not possible right? Unless new people are hired i guess
+    #So this else is not possible right? Unless new people are hired i guess
     else:
         new_deliverer = Deliverer(deliverer_id=deliverer_id)
         session.add(new_deliverer)
