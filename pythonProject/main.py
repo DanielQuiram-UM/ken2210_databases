@@ -195,9 +195,18 @@ session.close()
 
 # TODO: Method to calculate the price of one pizza
 def calculate_pizza_price(pizza):
+    #raw_price =
+    #final_price = raw_price * 1.49
     pass
-    #should include 40% profit AND 9% VAT
+''' should include 40% profit AND 9% VAT
+    translate the following SQL command: 
+SELECT pizzas.pizza_name, SUM(ingredients.ingredient_cost) as Cost 
+FROM pizzas JOIN pizza_ingredient ON pizzas.pizza_id = pizza_ingredient.pizza_id 
+JOIN ingredients ON pizza_ingredient.ingredient_id = ingredients.ingredient_id 
+GROUP BY pizzas.pizza_name;
 
+my attempt at translation: session.query(Pizza, ).filter_by(order_id=order_id).first()
+'''
 
 
 # TODO: Method to calculate the price of an entire order
