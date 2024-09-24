@@ -51,6 +51,7 @@ class ExtraItem(Base):
     item_id = Column(Integer, primary_key=True)
     item_name = Column(String(50), nullable=False)
     cost = Column(DECIMAL(5, 2))
+    dietary_status = Column(String(50))
 
 # Association table to link extra items and ingredients (many-to-many)
 item_ingredient_association = Table(
@@ -81,19 +82,20 @@ class Customer(Base):
     customer_id = Column(Integer, primary_key=True)
     customer_first_name = Column(String(50), nullable=False)
     customer_last_name = Column(String(50), nullable=False)
-    customer_email = Column(String(50), nullable=False, unique =True)
+    customer_email = Column(String(50), nullable=False, unique =True) #=username of customer
     gender = Column(String(10), nullable=False)
     date_of_birth = Column(Date, nullable=False)
     phone_number = Column(String(15), nullable=False)
     discount_available = Column(Boolean, default=False)
+    password = Column(String(100), nullable=False)
 
-    # TODO: Maybe abstract the address to get to 3NF
+class Customer_Address(Base):
+    __tablename__ = 'customer_address'
+    address_id = Column(Integer, primary_key=True)
     street = Column(String(100), nullable=False)
     city = Column(String(50), nullable=False)
     country = Column(String(50), nullable=False)
     postal_code = Column(String(20), nullable=False)
-
-    password = Column(String(100), nullable=False)  # Adjust length as necessary
 
 # Creating the order information table
 class Order(Base):
