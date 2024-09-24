@@ -7,13 +7,6 @@ from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
 
-# Association table to link extra items and ingredients (many-to-many)
-item_ingredient_association = Table(
-    'extra_item_ingredients', Base.metadata,
-    Column('extra_item_id', Integer, ForeignKey('extra_items.item_id'), primary_key=True),
-    Column('ingredient_id', Integer, ForeignKey('ingredients.ingredient_id'), primary_key=True)
-)
-
 # Creating the pizza table
 class Pizza(Base):
     __tablename__ = 'pizzas'
@@ -59,6 +52,13 @@ class ExtraItem(Base):
     item_id = Column(Integer, primary_key=True)
     item_name = Column(String(50), nullable=False)
     cost = Column(DECIMAL(5, 2))
+
+# Association table to link extra items and ingredients (many-to-many)
+item_ingredient_association = Table(
+    'extra_item_ingredients', Base.metadata,
+    Column('extra_item_id', Integer, ForeignKey('extra_items.item_id'), primary_key=True),
+    Column('ingredient_id', Integer, ForeignKey('ingredients.ingredient_id'), primary_key=True)
+)
 
 #Creating the extra items suborder table
 class ExtraItemOrder(Base):
