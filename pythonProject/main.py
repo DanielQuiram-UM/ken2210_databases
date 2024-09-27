@@ -205,7 +205,7 @@ FROM pizzas JOIN pizza_ingredient ON pizzas.pizza_id = pizza_ingredient.pizza_id
 JOIN ingredients ON pizza_ingredient.ingredient_id = ingredients.ingredient_id 
 GROUP BY pizzas.pizza_name;
 
-my attempt at translation: session.query(Pizza, ).filter_by(order_id=order_id).first()
+my attempt at translation: session.query(Pizza, ).
 '''
 
 
