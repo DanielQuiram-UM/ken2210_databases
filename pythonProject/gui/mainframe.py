@@ -24,22 +24,38 @@ class MainFrame(ctk.CTkFrame):
         logo_img_data = Image.open("../icons/pizza_icon.png")
         logo_img = CTkImage(dark_image=logo_img_data, light_image=logo_img_data, size=(100, 100))
 
-        CTkLabel(master=sidebar_frame, text="", image=logo_img).pack(pady=(10, 0), anchor="center")
+        order_icon_data = Image.open("../icons/order_basket_icon.png")
+        order_icon = CTkImage(dark_image=order_icon_data, light_image=order_icon_data, size=(30, 30))
 
+        CTkLabel(master=sidebar_frame, text="", image=logo_img).pack(pady=(10, 0), anchor="center")
 
         # Navigation Buttons on the Sidebar
         navigation_buttons = [
             ("Pizzas", lambda: self.show_page("Pizzas")),
             ("Ingredients", lambda: self.show_page("Ingredients")),
-            ("My Orders", lambda: self.show_page("My Orders")),
-            ("Account", lambda: self.show_page("Account")),
-            ("Logout", lambda: self.logout()),
-
-
         ]
 
-        # Create each button in the sidebar
+        # Create each button in the sidebar for main navigation
         for text, command in navigation_buttons:
+            button = CTkButton(master=sidebar_frame, text=text, command=command, font=("Arial", 16), text_color="#fff",
+                               fg_color="#1A936F", hover_color="#207244")
+            button.pack(pady=10, padx=10, fill="x")
+
+        # Add the order icon button for Current Order
+        order_button = CTkButton(master=sidebar_frame, text="", command=lambda: self.show_page("Current Order"),
+                                 image=order_icon, text_color="#fff",
+                                 fg_color="#1A936F", hover_color="#207244")
+        order_button.pack(pady=10, padx=10, fill="x")  # This adds the order icon button
+
+        # Account Navigation Buttons at the bottom
+        account_navigation_buttons = [
+            ("My Orders", lambda: self.show_page("My Orders")),
+            ("Account", lambda: self.show_page("Account")),
+            ("Logout", lambda: self.logout())
+        ]
+
+        # Create each account button in the sidebar
+        for text, command in account_navigation_buttons:
             button = CTkButton(master=sidebar_frame, text=text, command=command, font=("Arial", 16), text_color="#fff",
                                fg_color="#1A936F", hover_color="#207244")
             button.pack(pady=10, padx=10, fill="x")
@@ -52,6 +68,7 @@ class MainFrame(ctk.CTkFrame):
         # Initialize different pages in the main view
         self.pages = {
             "Pizzas": self.create_pizzas_page,
+            "Current Order": self.create_current_order_page,
             "Account": self.create_account_page,
             "My Orders": self.create_orders_page,
             "Ingredients": self.create_ingredients_page
@@ -130,6 +147,11 @@ class MainFrame(ctk.CTkFrame):
         """Create the Account page view."""
         CTkLabel(master=self.main_view, text="Account Page", font=("Arial Black", 25), text_color="#2A8C55").pack(pady=20)
         CTkLabel(master=self.main_view, text="User account details and settings go here.", font=("Arial", 15)).pack()
+
+    def create_current_order_page(self):
+        """Create the Current Order page view."""
+        CTkLabel(master=self.main_view, text="Current Order", font=("Arial Black", 25), text_color="#2A8C55").pack(pady=20)
+        CTkLabel(master=self.main_view, text="Details of the current order go here.", font=("Arial", 15)).pack()
 
     def create_orders_page(self):
         """Create the My Orders page view."""
