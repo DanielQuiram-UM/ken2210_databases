@@ -1,5 +1,8 @@
+from tkinter import Image
+
 import customtkinter as ctk
-from customtkinter import CTkFrame, CTkLabel, CTkButton
+from PIL import Image
+from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkImage
 
 from pythonProject.database import session
 from pythonProject.main_functions import calculate_pizza_price
@@ -18,7 +21,11 @@ class MainFrame(ctk.CTkFrame):
         sidebar_frame.pack_propagate(0)
         sidebar_frame.pack(fill="y", anchor="w", side="left")
 
-        CTkLabel(master=sidebar_frame, text="Pizza Delivery System").pack(pady=(38, 0), anchor="center")
+        logo_img_data = Image.open("../icons/pizza_icon.png")
+        logo_img = CTkImage(dark_image=logo_img_data, light_image=logo_img_data, size=(100, 100))
+
+        CTkLabel(master=sidebar_frame, text="", image=logo_img).pack(pady=(10, 0), anchor="center")
+
 
         # Navigation Buttons on the Sidebar
         navigation_buttons = [

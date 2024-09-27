@@ -4,7 +4,7 @@
 from sqlalchemy import Column, Integer, String, DECIMAL, Table, ForeignKey, Date, Boolean, DateTime, \
     PrimaryKeyConstraint
 from sqlalchemy.orm import relationship
-from database import Base
+from pythonProject.database import Base
 from datetime import datetime
 
 # Creating the junction table to link pizzas and ingredients (many-to-many)
