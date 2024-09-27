@@ -44,6 +44,7 @@ def match_ingredients_to_pizza(pizza_name, ingredient_names):
     session.commit()
 
 # TODO: check the pizza_order func?
+# Helper function to check if the pizza suborder already exists
 def get_or_create_pizza_suborder(order_id):
     existing_pizza_suborder = session.query(PizzaOrder).filter_by(order_id=order_id).first()
     if existing_pizza_suborder:
@@ -66,7 +67,7 @@ def get_or_create_extra_item(extra_item):
         return new_item
 
 # TODO: check the item_order table?
-
+# Helper function to check if item_suborder already exists
 def get_or_create_item_suborder(item_name, order_id):
     existing_item_suborder = session.query(ExtraItemOrder).filter_by(order_id=order_id).first()
     if existing_item_suborder:
@@ -77,7 +78,7 @@ def get_or_create_item_suborder(item_name, order_id):
         session.commit()
         return new_item_suborder
 
-# Helper function to check if customer already exists
+# Helper function to check if a customer already exists
 def find_or_create_customer(customer_email):
     existing_customer = session.query(Customer).filter_by(customer_email=customer_email).first()
     if existing_customer:
@@ -99,7 +100,7 @@ def find_or_create_order(order_id):
         session.commit()
         return new_order
 
-# Helper function to check if the delivery is already existing
+# Helper function to check if the delivery already exists
 def find_or_create_delivery(delivery_id):
     existing_delivery = session.query(Delivery).filter_by(delivery_id=delivery_id).first()
     if existing_delivery:
@@ -110,7 +111,7 @@ def find_or_create_delivery(delivery_id):
         session.commit()
         return new_delivery
 
-# Helper function to ensure the deliverers are not added to the db multiple times
+# Helper function to ensure the deliverers are not added to the database multiple times.
 def find_or_add_deliverer(deliverer_id):
     existing_deliverer = session.query(Deliverer).filter_by(deliverer_id=deliverer_id).first()
     if existing_deliverer:
@@ -128,28 +129,22 @@ session.close()
 # Defining common methods. These ones have to be implemented at some point
 
 # TODO: Function to add ingredients to a pizza
+def add_ingredients_to_pizza(pizza)
+    pass
 
 # TODO: Function to remove ingredients from a pizza
-
-# TODO: Method to calculate the price of one pizza
-def calculate_pizza_price(pizza):
-    #raw_price =
-    #final_price = raw_price * 1.49
+def remove_ingredients_from_pizza(pizza):
     pass
-''' should include 40% profit AND 9% VAT
-    translate the following SQL command: 
-SELECT pizzas.pizza_name, SUM(ingredients.ingredient_cost) as Cost 
-FROM pizzas JOIN pizza_ingredient ON pizzas.pizza_id = pizza_ingredient.pizza_id 
-JOIN ingredients ON pizza_ingredient.ingredient_id = ingredients.ingredient_id 
-GROUP BY pizzas.pizza_name;
 
-my attempt at translation: session.query(Pizza, ).
-'''
-
-
-# TODO: Method to calculate the price of pizza order
+# Function that calculates the price of a regular pizza
 def calculate_pizza_price(pizza):
+    #SQL query: finds the relevant ingredient cost for our 'ingredient' that belongs to our 'pizza'
+    #and sums all these costs
     sum(ingredient.ingredient_cost for ingredient in pizza.ingredients)
+
+# TODO: Method to calculate the price of an adjusted pizza
+def calculate_adjusted_pizza_price
+    pass
 
 # TODO: Method to calculate the price of an entire order
 
