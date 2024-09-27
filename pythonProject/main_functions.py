@@ -8,10 +8,6 @@ from database import session, init_db
 # Initialize the database (drop and create tables)
 init_db()
 
-# Filling in the pizza table
-pizzas = ["Margherita", "Marinara", "Ortolana", "Diavola", "Napolitana",
-          "Calzone", "Hawaii", "Quattro Formaggi", "Vegana", "Capricciosa"]
-
 # Helper function to check if pizza already exists
 def get_or_create_pizza(pizza_name):
     existing_pizza = session.query(Pizza).filter_by(pizza_name=pizza_name).first()
@@ -23,70 +19,18 @@ def get_or_create_pizza(pizza_name):
         session.commit()
         return new_pizza
 
-#Create for loop to ensure that all pizzas in the list are checked
-for pizza_name in pizzas:
-    get_or_create_pizza(pizza_name)
-
-#Filling in the ingredients table
-# TODO: check total costs now since i added pizza dough & check whether we want the drinks as ingredients
-
-ingredients = [
-    {"ingredient_name": "Pizza Dough", "ingredient_cost": 2.00, "dietary_status": "vegetarian"},
-    {"ingredient_name": "Tomato Sauce", "ingredient_cost": 2.00, "dietary_status": "vegan"},
-    {"ingredient_name": "Mozzarella", "ingredient_cost": 2.00, "dietary_status": "vegetarian"},
-    {"ingredient_name": "Zucchini", "ingredient_cost": 1.00, "dietary_status": "vegan"},
-    {"ingredient_name": "Eggplant", "ingredient_cost": 1.00, "dietary_status": "vegan"},
-    {"ingredient_name": "Gorgonzola", "ingredient_cost": 2.00, "dietary_status": "vegetarian"},
-    {"ingredient_name": "Parmesan", "ingredient_cost": 2.00, "dietary_status": "vegetarian"},
-    {"ingredient_name": "Fontina", "ingredient_cost": 2.00, "dietary_status": "vegetarian"},
-    {"ingredient_name": "Paprika", "ingredient_cost": 1.00, "dietary_status": "vegan"},
-    {"ingredient_name": "Onion", "ingredient_cost": 0.50, "dietary_status": "vegan"},
-    {"ingredient_name": "Salami", "ingredient_cost": 3.00, "dietary_status": "non-vegetarian"},
-    {"ingredient_name": "Rocket Salad", "ingredient_cost": 1.00, "dietary_status": "vegan"},
-    {"ingredient_name": "Garlic", "ingredient_cost": 0.50, "dietary_status": "vegan"},
-    {"ingredient_name": "Anchovies", "ingredient_cost": 3.00, "dietary_status": "non-vegetarian"},
-    {"ingredient_name": "Capers", "ingredient_cost": 1.00, "dietary_status": "vegan"},
-    {"ingredient_name": "Ham", "ingredient_cost": 3.00, "dietary_status": "non-vegetarian"},
-    {"ingredient_name": "Mushrooms", "ingredient_cost": 1.50, "dietary_status": "vegan"},
-    {"ingredient_name": "Pineapple", "ingredient_cost": 1.50, "dietary_status": "vegan"},
-    {"ingredient_name": "Artichokes", "ingredient_cost": 1.50, "dietary_status": "vegan"}
-]
-
-# Helper function to check if ingredient already exists
-def get_or_create_ingredient(ingredient_input):
-    existing_ingredient = session.query(Ingredient).filter_by(ingredient_name=ingredient_input.ingredient_name).first()
+# Helper function to check if ingredient already exists.
+def get_or_create_ingredient(ingredient):
+    existing_ingredient = session.query(Ingredient).filter_by(ingredient_name=ingredient.ingredient_name).first()
     if existing_ingredient:
         return existing_ingredient
     else:
-        new_ingredient = Ingredient(ingredient_name=ingredient_input.ingredient_name,
-                                    ingredient_cost=ingredient_input.ingredient_cost,
-                                    dietary_status=ingredient_input.dietary_status)
+        new_ingredient = Ingredient(ingredient_name=ingredient.ingredient_name,
+                                    ingredient_cost=ingredient.ingredient_cost,
+                                    dietary_status=ingredient.dietary_status)
         session.add(new_ingredient)
         session.commit()
         return new_ingredient
-
-#For loop to check that all ingredients in the list are added/in the db
-for ingredient_input in ingredients:
-    ingredient = Ingredient(
-        ingredient_name=ingredient_input['ingredient_name'],
-        ingredient_cost=ingredient_input['ingredient_cost'],
-        dietary_status=ingredient_input['dietary_status']
-    )
-    get_or_create_ingredient(ingredient)
-
-#Mapping the relations between the pizzas and their corresponding ingredients
-pizza_ingredient_map = {
-    "Margherita": ["Pizza Dough", "Tomato Sauce", "Mozzarella"],
-    "Marinara": ["Pizza Dough", "Tomato Sauce", "Garlic", "Onion"],
-    "Ortolana": ["Pizza Dough", "Tomato Sauce", "Zucchini", "Eggplant", "Paprika"],
-    "Diavola": ["Pizza Dough", "Tomato Sauce", "Mozzarella", "Salami"],
-    "Napolitana": ["Pizza Dough", "Tomato Sauce", "Mozzarella", "Anchovies", "Capers"],
-    "Calzone": ["Pizza Dough", "Mozzarella", "Ham", "Mushrooms", "Tomato Sauce"],
-    "Hawaii": ["Pizza Dough", "Tomato Sauce", "Mozzarella", "Ham", "Pineapple"],
-    "Quattro Formaggi": ["Pizza Dough", "Tomato Sauce", "Mozzarella", "Gorgonzola", "Parmesan", "Fontina"],
-    "Vegana": ["Pizza Dough", "Tomato Sauce", "Zucchini", "Paprika", "Mushrooms", "Rocket Salad"],
-    "Capricciosa": ["Pizza Dough", "Tomato Sauce", "Mozzarella", "Ham", "Mushrooms", "Artichokes"]
-}
 
 #Function that represents the junction table pizza ingredients
 def match_ingredients_to_pizza(pizza_name, ingredient_names):
@@ -99,11 +43,8 @@ def match_ingredients_to_pizza(pizza_name, ingredient_names):
             pizza.ingredients.append(ingredient)
     session.commit()
 
-for pizza_name, ingredient_names in pizza_ingredient_map.items():
-    match_ingredients_to_pizza(pizza_name, ingredient_names)
-
 # TODO: check the pizza_order func?
-def get_or_create_pizza_suborder(pizza_name, order_id):
+def get_or_create_pizza_suborder(order_id):
     existing_pizza_suborder = session.query(PizzaOrder).filter_by(order_id=order_id).first()
     if existing_pizza_suborder:
         return existing_pizza_suborder
@@ -112,9 +53,6 @@ def get_or_create_pizza_suborder(pizza_name, order_id):
         session.add(new_pizza_suborder)
         session.commit()
         return new_pizza_suborder
-
-#Filling in the extra items table
-extra_items = ["Coca Cola", "Ice Tea", "White Wine", "Red Wine", "Homemade Lemonade", "Tiramisu", "Nutella Pizza"]
 
 # Helper function to check if extra item already exists
 def get_or_create_extra_item(extra_item):
@@ -209,10 +147,11 @@ my attempt at translation: session.query(Pizza, ).
 '''
 
 
-# TODO: Method to calculate the price of an entire order
-def calculate_order_price(order):
-    pass
+# TODO: Method to calculate the price of pizza order
+def calculate_pizza_price(pizza):
+    sum(ingredient.ingredient_cost for ingredient in pizza.ingredients)
 
+# TODO: Method to calculate the price of an entire order
 
 # TODO: Method to create a new customer
 def create_customer(customer):

@@ -2,6 +2,7 @@ import customtkinter as ctk
 from customtkinter import CTkFrame, CTkLabel, CTkButton
 
 from pythonProject.database import session
+from pythonProject.main_functions import calculate_pizza_price
 from pythonProject.models import Pizza, Ingredient
 
 
@@ -77,7 +78,7 @@ class MainFrame(ctk.CTkFrame):
         # Loop through each pizza and display its name, ingredients, and a "Add to Order" button
         for pizza in pizzas:
             # Calculate the total price of the pizza based on its ingredients
-            total_price = sum(ingredient.ingredient_cost for ingredient in pizza.ingredients)
+            total_price = calculate_pizza_price(pizza)
 
             # Create a frame for each pizza
             pizza_frame = CTkFrame(master=scrollable_frame, fg_color="#eaeaea", height=120, corner_radius=8)
