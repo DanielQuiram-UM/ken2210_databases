@@ -18,6 +18,7 @@ session = Session()
 # Function to initialize (drop and create) the tables
 def init_db():
     pass
+    print("Init DB")
     # This is to always create the tables from scratch
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)

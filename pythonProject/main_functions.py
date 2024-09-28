@@ -3,6 +3,10 @@
 """
 import bcrypt
 from sqlalchemy import text
+from sqlalchemy.exc import NoResultFound
+
+from pythonProject.currentCustomer import CurrentCustomer
+from pythonProject.currentOrder import CurrentOrder
 from pythonProject.models import Pizza, Ingredient, ExtraItem, Customer, Order, Delivery, Deliverer, PizzaOrder, \
     ExtraItemOrder
 from pythonProject.database import session, init_db
@@ -193,13 +197,92 @@ def remove_customer(customer):
 
 # TODO: Create a new order
 def create_order(customer_id):
-    pass
+    return Order(
+        customer_id=customer_id,
+        order_status="new",
+    )
 
+def get_customer_id():
+    pass
 
 # TODO: Method to add product to an order
 def add_product_to_order(product, order):
     pass
 
+# Method to place the current order instance to be proceeded
+def place_current_order():
+    current_order = CurrentOrder().order
+    if current_order is None:
+        print("Could not find the current order to be placed")
+    else:
+        CurrentOrder().update_status("placed")
+        CurrentOrder().update_timestamp()
+
+def create_new_order():
+
+    current_order_singleton = CurrentOrder()
+    current_customer_singleton = CurrentCustomer()
+
+    current_customer = current_customer_singleton.customer
+
+    new_order = Order(
+        customer_id=current_customer.customer_id,  # Assuming you have a customer_id field in the Order model
+        order_status="new")
+    current_order_singleton.set_order(new_order)  # Update the singleton with the new order
+
+    return CurrentOrder().order
+
+# Method to add a pizza to the current order of a customer
+def add_pizza_to_current_order(pizza_id):
+
+    current_order_singleton = CurrentOrder()
+    current_order = current_order_singleton.order
+
+    if current_order is None:
+        current_order = create_new_order()
+    # Check if the pizza is already in the order
+    existing_pizza_order = session.query(PizzaOrder).filter(
+        PizzaOrder.order_id == current_order.order_id,
+        PizzaOrder.pizza_id == pizza_id
+    ).first()
+
+    if existing_pizza_order:
+        # If the pizza is already in the order, increase the amount
+        existing_pizza_order.pizza_amount += 1
+    else:
+        # Create a new PizzaOrder entry
+        new_pizza_order = PizzaOrder(order_id=current_order.order_id, pizza_id=pizza_id, pizza_amount=1)
+        session.add(new_pizza_order)
+
+    # Commit the session to save changes
+    session.commit()
+
+def remove_pizza_from_current_order(pizza_id):
+    current_order_singleton = CurrentOrder()
+
+    # Get the current order
+    current_order = current_order_singleton.order
+
+    # If no current order exists, exit the method as there's nothing to remove
+    if not current_order:
+        return
+
+    # Check if the pizza is already in the order
+    existing_pizza_order = session.query(PizzaOrder).filter(
+        PizzaOrder.order_id == current_order.order_id,
+        PizzaOrder.pizza_id == pizza_id
+    ).first()
+
+    if existing_pizza_order:
+        # If the pizza amount is greater than 1, reduce the amount by 1
+        if existing_pizza_order.pizza_amount > 1:
+            existing_pizza_order.pizza_amount -= 1
+        else:
+            # If the amount is 1, remove the pizza order from the session
+            session.delete(existing_pizza_order)
+
+        # Commit the session to save changes
+        session.commit()
 
 # TODO: Method to remove a product from an order
 def remove_product_from_order(product, order):

@@ -42,7 +42,7 @@ class PizzaOrder(Base):
     )
 
 # Defining one-many relationships
-    order = relationship('Order', backref='pizza_orders')
+    order = relationship('Order', back_populates='pizza_orders')
     pizza = relationship('Pizza', backref='pizza_orders')
 
 #Creating the extra item table
@@ -73,7 +73,7 @@ class ExtraItemOrder(Base):
     )
 
  # Defining the one-many relationships
-    order = relationship('Order', backref='extra_item_orders')
+    order = relationship('Order', back_populates='extra_item_orders')
     pizza = relationship('ExtraItem', backref='extra_item_orders')
 
 # Creating the customer table
@@ -107,9 +107,13 @@ class Order(Base):
     discount_applied = Column(Boolean, default=False)
     order_status = Column(String(50), nullable=False)
 
-# Defining the one-to-many relationship with the customer & delivery class
+    # Defining the one-to-many relationship with the customer & delivery class
     customer = relationship('Customer', backref='orders')
     delivery = relationship('Delivery', backref='orders')
+
+    # Defining the child relations
+    pizza_orders = relationship('PizzaOrder', back_populates='order', cascade="all, delete-orphan")
+    extra_item_orders = relationship('ExtraItemOrder', back_populates='order', cascade="all, delete-orphan")
 
 #Creating the delivery table
 class Delivery(Base):

@@ -2,6 +2,8 @@ import customtkinter as ctk
 import tkinter
 from tkinter import messagebox
 import bcrypt
+
+from pythonProject.currentCustomer import CurrentCustomer
 from pythonProject.models import Customer
 from pythonProject.database import session
 
@@ -49,6 +51,8 @@ class LoginFrame(ctk.CTkFrame):
 
         customer = session.query(Customer).filter_by(customer_email=email).first()
         if customer and bcrypt.checkpw(password.encode('utf-8'), customer.password.encode('utf-8')):
+            current_customer = CurrentCustomer()
+            current_customer.set_customer(customer)
             self.parent.show_frame("MainFrame")
         else:
             messagebox.showerror("Login", "Incorrect email or password.")
