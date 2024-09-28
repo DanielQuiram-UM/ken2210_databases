@@ -78,7 +78,9 @@ class RegistrationFrame(ctk.CTkFrame):
         gender = self.gender_var.get()  # Get gender from the dropdown
         dob = datetime.strptime(self.entry_fields['date_of_birth'].get(),
                                 "%Y-%m-%d").date() if 'date_of_birth' in self.entry_fields else None
-        phone = int(self.entry_fields['phone_number'].get()) if 'phone_number' in self.entry_fields else None
+        # Dummy until this is a field only with integers
+        phone = 123
+        #phone = int(self.entry_fields['phone_number'].get()) if 'phone_number' in self.entry_fields else None
         #street = self.entry_fields['street'].get() if 'street' in self.entry_fields else None
         #city = self.entry_fields['city'].get() if 'city' in self.entry_fields else None
         #country = self.entry_fields['country'].get() if 'country' in self.entry_fields else None

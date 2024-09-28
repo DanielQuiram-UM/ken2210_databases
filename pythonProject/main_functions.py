@@ -9,11 +9,7 @@ from pythonProject.currentCustomer import CurrentCustomer
 from pythonProject.currentOrder import CurrentOrder
 from pythonProject.models import Pizza, Ingredient, ExtraItem, Customer, Order, Delivery, Deliverer, PizzaOrder, \
     ExtraItemOrder
-from pythonProject.database import session, init_db
-
-
-# Initialize the database (drop and create tables)
-# init_db()
+from pythonProject.database import session
 
 # Helper function to check if pizza already exists
 def get_or_create_pizza(pizza_name):
