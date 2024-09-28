@@ -1,5 +1,5 @@
 from datetime import timedelta, datetime
-from tkinter import Image
+from tkinter import Image, TclError
 
 import customtkinter as ctk
 from PIL import Image
@@ -109,6 +109,11 @@ class MainFrame(ctk.CTkFrame):
         scrollable_frame = ctk.CTkScrollableFrame(master=self.main_view, fg_color="#f5f5f5", width=660, height=520)
         scrollable_frame.pack(pady=10, padx=10, fill="both", expand=True)
 
+        # Schedule the layout of pizza details to allow for complete rendering
+        self.main_view.after(200, self.layout_pizza_details, pizzas, current_order, scrollable_frame)
+
+    def layout_pizza_details(self, pizzas, current_order, scrollable_frame):
+        """Layout pizza details after the main view has been rendered."""
         # Loop through each pizza and display its name, ingredients, and the amount controls
         for pizza in pizzas:
             # Calculate the total price of the pizza based on its ingredients
@@ -123,7 +128,7 @@ class MainFrame(ctk.CTkFrame):
                         break
 
             # Create a frame for each pizza
-            pizza_frame = CTkFrame(master=scrollable_frame, fg_color="#eaeaea", height=120, corner_radius=8)
+            pizza_frame = CTkFrame(master=scrollable_frame, fg_color="#eaeaea", corner_radius=8)
             pizza_frame.pack(pady=5, padx=10, fill="x")
 
             # Create a frame to hold the pizza name and price in the same row
@@ -144,15 +149,16 @@ class MainFrame(ctk.CTkFrame):
             details_frame = CTkFrame(master=pizza_frame, fg_color="#eaeaea")
             details_frame.pack(fill="x", pady=(5, 10))
 
-            # Display ingredients on the left inside details_frame
+            # Display ingredients in a label that can be wrapped
             ingredients_text = ", ".join([ingredient.ingredient_name for ingredient in pizza.ingredients])
             ingredients_label = CTkLabel(master=details_frame, text=f"Ingredients: {ingredients_text}",
-                                         font=("Arial", 14), text_color="#555")
-            ingredients_label.pack(anchor="w", side="left", padx=(20, 0))
+                                         font=("Arial", 14), text_color="#555",
+                                         wraplength=600)  # Adjust wraplength based on design
+            ingredients_label.pack(anchor="w", side="left", padx=(20, 0), fill="x")
 
-            # Create a frame for the counter and control buttons on the right inside details_frame
-            control_frame = CTkFrame(master=details_frame, fg_color="#eaeaea")
-            control_frame.pack(anchor="e", side="right", padx=20)
+            # Create a control frame for the buttons and ensure it's positioned correctly
+            control_frame = CTkFrame(master=pizza_frame, fg_color="#eaeaea")
+            control_frame.pack(anchor="e", side="bottom", padx=20, pady=(5, 10))  # Always pack at the bottom
 
             # Add "-" button to decrease the pizza amount in the order
             decrease_button = CTkButton(
@@ -164,7 +170,7 @@ class MainFrame(ctk.CTkFrame):
                 hover_color="#207244",
                 width=30,
                 height=30,
-                command=lambda pizza_id=pizza.pizza_id: remove_pizza_from_current_order(pizza_id)
+                command=lambda pizza_id=pizza.pizza_id: self.remove_pizza_from_current_order(pizza_id)
             )
             decrease_button.pack(side="left", padx=(0, 5))
 
@@ -178,9 +184,17 @@ class MainFrame(ctk.CTkFrame):
                 hover_color="#207244",
                 width=30,
                 height=30,
-                command=lambda pizza_id=pizza.pizza_id: add_pizza_to_current_order(pizza_id)
+                command=lambda pizza_id=pizza.pizza_id: self.add_pizza_to_current_order(pizza_id)
             )
             increase_button.pack(side="left", padx=(5, 0))
+
+    def add_pizza_to_current_order(self,pizza_id):
+        add_pizza_to_current_order(pizza_id)
+        self.show_page("Current Order")
+
+    def remove_pizza_from_current_order(self,pizza_id):
+        remove_pizza_from_current_order(pizza_id)
+        self.show_page("Current Order")
 
     def create_account_page(self):
         """Create the Account page view."""
@@ -200,14 +214,18 @@ class MainFrame(ctk.CTkFrame):
         # Access the current order from the CurrentOrder singleton
         current_order = CurrentOrder().order
 
+        # Create a container frame for the scrollable area and the button
+        container_frame = CTkFrame(master=self.main_view)
+        container_frame.pack(pady=10, padx=10, fill="both", expand=True)
+
         if current_order and current_order.pizza_orders:  # Assuming pizza_orders is a relationship attribute in Order
-            # Create a title for the ordered pizzas
-            CTkLabel(master=self.main_view, text="Ordered Pizzas:", font=("Arial", 18, "bold"), text_color="#000").pack(
-                pady=(10, 5))
 
             # Create a scrollable frame for displaying ordered pizzas
-            scrollable_frame = ctk.CTkScrollableFrame(master=self.main_view, fg_color="#f5f5f5", width=660, height=520)
+            scrollable_frame = ctk.CTkScrollableFrame(master=container_frame, fg_color="#f5f5f5", width=660)
             scrollable_frame.pack(pady=10, padx=10, fill="both", expand=True)
+
+            # Set the maximum height dynamically based on the container frame's height
+            self.update_scrollable_frame_height(scrollable_frame)
 
             # Loop through each pizza in the current order
             for pizza_order in current_order.pizza_orders:
@@ -218,18 +236,56 @@ class MainFrame(ctk.CTkFrame):
                     pizza_frame = CTkFrame(master=scrollable_frame, fg_color="#eaeaea", height=60, corner_radius=8)
                     pizza_frame.pack(pady=5, padx=10, fill="x")
 
-                    # Create labels for the pizza name and quantity
+                    # Create labels for the pizza name
                     pizza_name_label = CTkLabel(master=pizza_frame, text=pizza.pizza_name, font=("Arial", 16),
                                                 text_color="#000")
                     pizza_name_label.pack(anchor="w", padx=(20, 0))
 
-                    quantity_label = CTkLabel(master=pizza_frame, text=f"Quantity: {pizza_order.pizza_amount}",
+                    # Create a frame to hold the quantity label and control buttons
+                    quantity_control_frame = CTkFrame(master=pizza_frame, fg_color="#eaeaea")
+                    quantity_control_frame.pack(anchor="e", padx=(0, 20))
+
+                    # Display the current quantity of the pizza
+                    quantity_label = CTkLabel(master=quantity_control_frame,
+                                              text=f"Quantity: {pizza_order.pizza_amount}",
                                               font=("Arial", 14), text_color="#555")
-                    quantity_label.pack(anchor="e", padx=(0, 20))
+                    quantity_label.pack(side="left")
+
+                    # Create a frame for the control buttons
+                    control_frame = CTkFrame(master=quantity_control_frame, fg_color="#eaeaea")
+                    control_frame.pack(side="left", padx=(10, 0))
+
+                    # Add "-" button to decrease the pizza amount in the order
+                    decrease_button = CTkButton(
+                        master=control_frame,
+                        text="-",
+                        font=("Arial", 14),
+                        fg_color="#1A936F",
+                        text_color="#fff",
+                        hover_color="#207244",
+                        width=30,
+                        height=30,
+                        command=lambda pizza_id=pizza.pizza_id: self.remove_pizza_from_current_order(pizza_id)
+                    )
+                    decrease_button.pack(side="left", padx=(0, 5))
+
+                    # Add "+" button to increase the pizza amount in the order
+                    increase_button = CTkButton(
+                        master=control_frame,
+                        text="+",
+                        font=("Arial", 14),
+                        fg_color="#1A936F",
+                        text_color="#fff",
+                        hover_color="#207244",
+                        width=30,
+                        height=30,
+                        command=lambda pizza_id=pizza.pizza_id: self.add_pizza_to_current_order(pizza_id)
+                    )
+                    increase_button.pack(side="left", padx=(5, 0))
 
             # Show the "Place Order" button if the order is not yet placed
             place_order_button = CTkButton(
-                master=self.main_view, text="Place Order", font=("Arial", 16, "bold"), fg_color="#2A8C55",
+                master=container_frame, text="Place Order", font=("Arial", 16, "bold"), fg_color="#2A8C55",
                 text_color="#FFF",
                 width=200, height=40, command=lambda: self.place_order_and_reload()
             )
@@ -237,8 +293,24 @@ class MainFrame(ctk.CTkFrame):
 
         else:
             # If there are no pizzas in the current order
-            CTkLabel(master=self.main_view, text="Add items to place your order.", font=("Arial", 14),
+            CTkLabel(master=container_frame, text="Add items to place your order.", font=("Arial", 14),
                      text_color="#555").pack(pady=20)
+
+    def update_scrollable_frame_height(self, scrollable_frame):
+        """Update the height of the scrollable frame based on the container frame's height."""
+        # Check if the scrollable_frame and its master exist
+        if scrollable_frame and scrollable_frame.master:
+            try:
+                # Get the height of the container frame
+                container_height = scrollable_frame.master.winfo_height()
+                max_height = container_height * 0.8  # Set to 80% of the container frame height
+                scrollable_frame.configure(height=max_height)
+
+            except TclError as e:
+                print(f"Error updating scrollable frame height: {e}")
+
+            # Optionally, bind the resize event to update the height dynamically
+            self.main_view.bind("<Configure>", lambda e: self.update_scrollable_frame_height(scrollable_frame))
 
     def place_order_and_reload(self):
 
