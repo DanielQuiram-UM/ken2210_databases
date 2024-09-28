@@ -379,6 +379,3 @@ class MainFrame(ctk.CTkFrame):
 
     def logout(self):
         self.parent.show_frame("LoginFrame")
-
-    def place_current_order(self):
-        place_current_order()
