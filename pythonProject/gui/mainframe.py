@@ -455,11 +455,11 @@ class MainFrame(ctk.CTkFrame):
 
 #TODO: finish account page --> Daniel
 
-#TODO: continue shopping button after adding a pizza / extra item
+#TODO: continue shopping button after adding a pizza / extra item --> Merel
 
-#TODO: add estimated delivery time to order confirmation
+#TODO: add estimated delivery time to order confirmation --> Daniel
 
-#TODO: tracking of the delivery
+#TODO: tracking teh status of the delivery
 
 #TODO: earnings page solely visible for the boss of the pizza place
 
