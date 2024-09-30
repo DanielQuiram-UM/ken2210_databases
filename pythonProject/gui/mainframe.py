@@ -285,7 +285,7 @@ class MainFrame(ctk.CTkFrame):
 
             # Show the "Place Order" button if the order is not yet placed
             place_order_button = CTkButton(
-                master=container_frame, text="Place Order", font=("Arial", 16, "bold"), fg_color="#2A8C55",
+                master=container_frame, text="Place Order", font=("Arial", 16, "bold"), fg_color="#1A936F",
                 text_color="#FFF",
                 width=200, height=40, command=lambda: self.place_order_and_reload()
             )
