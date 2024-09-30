@@ -1,6 +1,9 @@
 """
     Main logic for interacting with the database
 """
+import decimal
+from pickletools import decimalnl_long
+
 import bcrypt
 from sqlalchemy import text
 from sqlalchemy.exc import NoResultFound
@@ -10,6 +13,8 @@ from pythonProject.currentOrder import CurrentOrder
 from pythonProject.models import Pizza, Ingredient, ExtraItem, Customer, Order, Delivery, Deliverer, PizzaOrder, \
     ExtraItemOrder
 from pythonProject.database import session
+
+''' FOOD STUFF'''
 
 # Helper function to check if pizza already exists
 def get_or_create_pizza(pizza_name):
@@ -47,7 +52,6 @@ def match_ingredients_to_pizza(pizza_name, ingredient_names):
     session.commit()
 
 
-# TODO: check the pizza_order func?
 # Helper function to check if the pizza suborder already exists
 def get_or_create_pizza_suborder(order_id):
     existing_pizza_suborder = session.query(PizzaOrder).filter_by(order_id=order_id).first()
@@ -72,9 +76,8 @@ def get_or_create_extra_item(extra_item):
         return new_item
 
 
-# TODO: check the item_order table?
 # Helper function to check if item_suborder already exists
-def get_or_create_item_suborder(item_name, order_id):
+def get_or_create_item_suborder(order_id):
     existing_item_suborder = session.query(ExtraItemOrder).filter_by(order_id=order_id).first()
     if existing_item_suborder:
         return existing_item_suborder
@@ -85,6 +88,7 @@ def get_or_create_item_suborder(item_name, order_id):
         return new_item_suborder
 
 
+''' CUSTOMER & DELIVERY INFO'''
 # Helper function to check if a customer already exists
 def find_or_create_customer(customer_email):
     existing_customer = session.query(Customer).filter_by(customer_email=customer_email).first()
@@ -140,80 +144,16 @@ session.close()
 
 # Defining common methods. These ones have to be implemented at some point
 
-# TODO: Function to add ingredients to a pizza
-def add_ingredients_to_pizza(pizza):
-    pass
-
-
-# TODO: Function to remove ingredients from a pizza
-def remove_ingredients_from_pizza(pizza):
-    pass
-
-
 # Function that calculates the price of a regular pizza
 def calculate_pizza_price(pizza):
     # SQL query: finds the relevant ingredient cost for our 'ingredient' that belongs to our 'pizza'
     # and sums all these costs
-    return sum(ingredient.ingredient_cost for ingredient in pizza.ingredients)
-
-
-# TODO: Method to calculate the price of an adjusted pizza
-def calculate_adjusted_pizza_price():
-    pass
+    return sum(ingredient.ingredient_cost for ingredient in pizza.ingredients)*decimal.Decimal(1.49)
 
 
 # TODO: Method to calculate the price of an entire order
 
-# TODO: Method to register a new customer
-# Function to register a new customer
-def register_customer(first_name, last_name, email, password, gender, dob, phone, street, city, country,
-                      postal_code):
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-    new_customer = Customer(
-        customer_first_name=first_name,
-        customer_last_name=last_name,
-        customer_email=email,
-        password=hashed_password.decode('utf-8'),
-        gender=gender,
-        date_of_birth=dob,
-        phone_number=phone,
-        street=street,
-        city=city,
-        country=country,
-        postal_code=postal_code
-    )
-    session.add(new_customer)
-    session.commit()
-
-
-# TODO: Method to remove a customer
-def remove_customer(customer):
-    pass
-
-
-# TODO: Create a new order
-def create_order(customer_id):
-    return Order(
-        customer_id=customer_id,
-        order_status="new",
-    )
-
-def get_customer_id():
-    pass
-
-# TODO: Method to add product to an order
-def add_product_to_order(product, order):
-    pass
-
-# Method to place the current order instance to be proceeded
-def place_current_order():
-    current_order = CurrentOrder().order
-    if current_order is None:
-        print("Could not find the current order to be placed")
-    else:
-        CurrentOrder().update_status("placed")
-        CurrentOrder().update_timestamp()
-
+# Function to create a new order
 def create_new_order():
 
     current_order_singleton = CurrentOrder()
@@ -227,6 +167,17 @@ def create_new_order():
     current_order_singleton.set_order(new_order)  # Update the singleton with the new order
 
     return CurrentOrder().order
+
+
+# Method to place the current order instance to be proceeded
+def place_current_order():
+    current_order = CurrentOrder().order
+    if current_order is None:
+        print("Could not find the current order to be placed")
+    else:
+        CurrentOrder().update_status("placed")
+        CurrentOrder().update_timestamp()
+
 
 # Method to add a pizza to the current order of a customer
 def add_pizza_to_current_order(pizza_id):
@@ -252,6 +203,11 @@ def add_pizza_to_current_order(pizza_id):
 
     # Commit the session to save changes
     session.commit()
+
+# TODO: Method to add a product to an order
+def add_extra_item_to_order(product, order):
+    pass
+
 
 def remove_pizza_from_current_order(pizza_id):
     current_order_singleton = CurrentOrder()
@@ -281,9 +237,15 @@ def remove_pizza_from_current_order(pizza_id):
         session.commit()
 
 # TODO: Method to remove a product from an order
-def remove_product_from_order(product, order):
+def remove_extra_item_from_current_order(product, order):
     pass
 
+#Cancels the order with the given order ID and refreshes the page."""
+def cancel_order(order_id):
+    order_to_cancel = session.query(Order).filter_by(order_id=order_id).first()
+    if order_to_cancel:
+        session.delete(order_to_cancel)
+        session.commit()  # Save the changes to the database
 
 # TODO: Create a new delivery
 def create_delivery():
@@ -299,15 +261,38 @@ def add_order_to_delivery(order):
 def remove_order_from_delivery(order):
     pass
 
+''' CUSTOMER & DELIVERY FUNCTIONS'''
+# Function to register a new customer
+def register_customer(first_name, last_name, email, password, gender, dob, phone, street, city, country,
+                      postal_code):
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    new_customer = Customer(
+        customer_first_name=first_name,
+        customer_last_name=last_name,
+        customer_email=email,
+        password=hashed_password.decode('utf-8'),
+        gender=gender,
+        date_of_birth=dob,
+        phone_number=phone,
+        street=street,
+        city=city,
+        country=country,
+        postal_code=postal_code
+    )
+    session.add(new_customer)
+    session.commit()
 
-# TODO: Method to add an order to a delivery
-def add_order_to_delivery(pizza):
+
+# TODO: Method to remove a customer. Do we need this?
+def remove_customer(customer):
     pass
 
-# TODO:  Method to cancel order within 5 min
+#TODO: for delivery purposes
+def get_customer_id():
+    pass
 
+# TODO: Method to calculate when someone has a right to the 10% discount (so after 10 pizzas ordered)
 
-# TODO: Method to calculate when someone has a right to a discount
+#TODO: Method to offer someone a free pizza + drink on their bday
 
-
-# TODO: Method to apply discount code
+# TODO: Method to apply discount codes

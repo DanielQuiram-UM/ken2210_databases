@@ -13,8 +13,6 @@ def populate_data():
         get_or_create_pizza(pizza_name)
 
     # Filling in the ingredients table
-    # TODO: check total costs now since i added pizza dough & check whether we want the drinks as ingredients
-
     ingredients = [
         {"ingredient_name": "Pizza Dough", "ingredient_cost": 2.00, "dietary_status": "vegetarian"},
         {"ingredient_name": "Tomato Sauce", "ingredient_cost": 2.00, "dietary_status": "vegan"},

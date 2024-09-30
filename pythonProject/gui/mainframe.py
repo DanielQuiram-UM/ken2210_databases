@@ -9,9 +9,10 @@ from pythonProject.currentOrder import CurrentOrder
 from pythonProject.currentCustomer import CurrentCustomer
 from pythonProject.database import session
 from pythonProject.main_functions import calculate_pizza_price, add_pizza_to_current_order, place_current_order, \
-    remove_pizza_from_current_order, create_new_order
+    remove_pizza_from_current_order, create_new_order, cancel_order
 from pythonProject.models import Pizza, Ingredient, Order
 
+#to remind ourselves: self refers to working in the current GUI frame
 
 class MainFrame(ctk.CTkFrame):
     def __init__(self, parent):
@@ -402,12 +403,8 @@ class MainFrame(ctk.CTkFrame):
                 cancel_button.pack(pady=(5, 10), anchor="e", padx=(0, 20))
 
     def cancel_order(self, order_id):
-        """Cancel the order with the given order ID and refresh the page."""
-        order_to_cancel = session.query(Order).filter_by(order_id=order_id).first()
-        if order_to_cancel:
-            session.delete(order_to_cancel)
-            session.commit()  # Save the changes to the database
-        self.show_page("My Orders")  # Refresh the orders page to reflect changes
+        cancel_order(order_id)
+        self.show_page("My Orders")  # Refreshes the orders page to reflect changes
 
     def create_ingredients_page(self):
         """Create the Ingredients page view."""
@@ -451,3 +448,19 @@ class MainFrame(ctk.CTkFrame):
 
     def logout(self):
         self.parent.show_frame("LoginFrame")
+
+#TODO: display dietary status underneath each pizza --> Daniel
+
+#TODO: create extra items --> Merel will attempt
+
+#TODO: finish account page --> Daniel
+
+#TODO: continue shopping button after adding a pizza / extra item
+
+#TODO: add estimated delivery time to order confirmation
+
+#TODO: tracking of the delivery
+
+#TODO: earnings page solely visible for the boss of the pizza place
+
+#TODO: monitoring: provide a real-time display for the restaurant staff, showing a list of pizzas that have been ordered but not yet dispatched for delivery
