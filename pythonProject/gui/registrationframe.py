@@ -4,7 +4,7 @@ import bcrypt
 import customtkinter as ctk
 from tkcalendar import DateEntry
 
-from pythonProject.models import Customer
+from pythonProject.models import Customer, Customer_Address
 from pythonProject.database import session
 from datetime import datetime
 
@@ -79,20 +79,19 @@ class RegistrationFrame(ctk.CTkFrame):
         dob = datetime.strptime(self.entry_fields['date_of_birth'].get(),
                                 "%Y-%m-%d").date() if 'date_of_birth' in self.entry_fields else None
         # Dummy until this is a field only with integers
-        phone = 123
-        #phone = int(self.entry_fields['phone_number'].get()) if 'phone_number' in self.entry_fields else None
-        #street = self.entry_fields['street'].get() if 'street' in self.entry_fields else None
-        #city = self.entry_fields['city'].get() if 'city' in self.entry_fields else None
-        #country = self.entry_fields['country'].get() if 'country' in self.entry_fields else None
-        #postal_code = self.entry_fields['postal_code'].get() if 'postal_code' in self.entry_fields else None
+        phone = self.entry_fields['phone_number'].get() if 'phone_number' in self.entry_fields else None
+        street = self.entry_fields['street'].get() if 'street' in self.entry_fields else None
+        city = self.entry_fields['city'].get() if 'city' in self.entry_fields else None
+        country = self.entry_fields['country'].get() if 'country' in self.entry_fields else None
+        postal_code = self.entry_fields['postal_code'].get() if 'postal_code' in self.entry_fields else None
 
         # Register new customer
-        self.register_customer(first_name, last_name, email, password, gender, dob, phone)
+        self.register_customer(first_name, last_name, email, password, gender, dob, phone, street, city, country, postal_code)
         messagebox.showinfo("Registration", "Registration Successful!")
         self.display_login_form()
 
     #TODO: Add Address accordingly
-    def register_customer(self, first_name, last_name, email, password, gender, dob, phone):
+    def register_customer(self, first_name, last_name, email, password, gender, dob, phone, street, city, country, postal_code):
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         new_customer = Customer(
             customer_first_name=first_name,
@@ -103,6 +102,13 @@ class RegistrationFrame(ctk.CTkFrame):
             date_of_birth=dob,
             phone_number=phone,
         )
+        new_address = Customer_Address(
+            street=street,
+            city=city,
+            country=country,
+            postal_code=postal_code
+        )
+        new_customer.address = new_address
         session.add(new_customer)
         session.commit()
 

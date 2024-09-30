@@ -1,6 +1,7 @@
 # for organization purposes , we have put all the lists in here
 from pythonProject.database import init_db
-from pythonProject.main_functions import get_or_create_pizza, get_or_create_ingredient, match_ingredients_to_pizza
+from pythonProject.main_functions import get_or_create_pizza, get_or_create_ingredient, match_ingredients_to_pizza, \
+    get_or_create_deliverer
 
 
 def populate_data():
@@ -59,6 +60,17 @@ def populate_data():
 
     # Filling in the extra items table
     extra_items = ["Coca Cola", "Ice Tea", "White Wine", "Red Wine", "Homemade Lemonade", "Tiramisu", "Nutella Pizza"]
+
+    deliverers = [
+        {"deliverer_first_name": "Anne", "deliverer_last_name": "Chovy"},
+        {"deliverer_first_name": "Tony", "deliverer_last_name": "Tomato"},
+        {"deliverer_first_name": "Bella", "deliverer_last_name": "Basil"},
+        {"deliverer_first_name": "Marina", "deliverer_last_name": "Marinara"},
+        {"deliverer_first_name": "Vito", "deliverer_last_name": "Vegano"}
+    ]
+
+    for deliverer in deliverers:
+        get_or_create_deliverer(deliverer)
 
 if __name__ == '__main__':
     init_db()

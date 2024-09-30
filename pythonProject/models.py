@@ -82,12 +82,15 @@ class Customer(Base):
     customer_id = Column(Integer, primary_key=True)
     customer_first_name = Column(String(50), nullable=False)
     customer_last_name = Column(String(50), nullable=False)
-    customer_email = Column(String(50), nullable=False, unique =True) #=username of customer
+    customer_email = Column(String(50), nullable=False, unique=True)  # Username of customer
     gender = Column(String(10), nullable=False)
     date_of_birth = Column(Date, nullable=False)
-    phone_number = Column(String(15), nullable=False)
+    phone_number = Column(String(50), nullable=False)
     discount_available = Column(Boolean, default=False)
     password = Column(String(100), nullable=False)
+
+    # Establish a one-to-one relationship with Customer_Address
+    address = relationship("Customer_Address", uselist=False, back_populates="customer")
 
 class Customer_Address(Base):
     __tablename__ = 'customer_address'
@@ -96,6 +99,12 @@ class Customer_Address(Base):
     city = Column(String(50), nullable=False)
     country = Column(String(50), nullable=False)
     postal_code = Column(String(20), nullable=False)
+
+    # Foreign key to link to the Customer
+    customer_id = Column(Integer, ForeignKey('customers.customer_id'), nullable=False)
+
+    # Establish the relationship back to Customer
+    customer = relationship("Customer", back_populates="address")
 
 # Creating the order information table
 class Order(Base):
@@ -131,7 +140,7 @@ class Deliverer(Base):
     deliverer_id = Column(Integer, primary_key=True)
     deliverer_first_name = Column(String(50), nullable=False)
     deliverer_last_name = Column(String(50), nullable=False)
-    postal_code = Column(String(15), nullable=False)
+    postal_code = Column(String(15))
 
 #Creating the discount table
 class DiscountCode(Base):
