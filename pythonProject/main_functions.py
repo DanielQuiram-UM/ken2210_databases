@@ -14,8 +14,7 @@ from pythonProject.models import Pizza, Ingredient, ExtraItem, Customer, Order, 
     ExtraItemOrder
 from pythonProject.database import session
 
-''' FOOD STUFF'''
-
+''' FOOD FUNCTIONS'''
 
 # Helper function to check if pizza already exists
 def get_or_create_pizza(pizza_name):
@@ -29,7 +28,7 @@ def get_or_create_pizza(pizza_name):
         return new_pizza
 
 
-# Helper function to check if ingredient already exists.
+# Helper function to check if an ingredient already exists.
 def get_or_create_ingredient(ingredient):
     existing_ingredient = session.query(Ingredient).filter_by(ingredient_name=ingredient["ingredient_name"]).first()
     if existing_ingredient:
@@ -41,26 +40,6 @@ def get_or_create_ingredient(ingredient):
         session.add(new_ingredient)
         session.commit()
         return new_ingredient
-
-
-def get_or_create_deliverer(deliverer):
-    # Check if a deliverer with the same first name and last name already exists
-    existing_deliverer = session.query(Deliverer).filter_by(
-        deliverer_first_name=deliverer["deliverer_first_name"],
-        deliverer_last_name=deliverer["deliverer_last_name"]
-    ).first()
-
-    if existing_deliverer:
-        return existing_deliverer
-    else:
-        # Create a new deliverer if not found
-        new_deliverer = Deliverer(
-            deliverer_first_name=deliverer["deliverer_first_name"],
-            deliverer_last_name=deliverer["deliverer_last_name"]
-        )
-        session.add(new_deliverer)
-        session.commit()
-        return new_deliverer
 
 
 # Function that represents the junction table pizza ingredients
@@ -111,7 +90,6 @@ def get_or_create_item_suborder(order_id):
 
 ''' CUSTOMER & DELIVERY INFO'''
 
-
 # Helper function to check if a customer already exists
 def find_or_create_customer(customer_email):
     existing_customer = session.query(Customer).filter_by(customer_email=customer_email).first()
@@ -122,59 +100,6 @@ def find_or_create_customer(customer_email):
         session.add(new_customer)
         session.commit()
         return new_customer
-
-
-# Helper function to check if the order already exists
-def find_or_create_order(order_id):
-    existing_order = session.query(Order).filter_by(order_id=order_id).first()
-    if existing_order:
-        return existing_order
-    else:
-        new_order = Order(order_id=order_id)
-        session.add(new_order)
-        session.commit()
-        return new_order
-
-
-# Helper function to check if the delivery already exists
-def find_or_create_delivery(delivery_id):
-    existing_delivery = session.query(Delivery).filter_by(delivery_id=delivery_id).first()
-    if existing_delivery:
-        return existing_delivery
-    else:
-        new_delivery = Delivery(delivery_id=delivery_id)
-        session.add(new_delivery)
-        session.commit()
-        return new_delivery
-
-
-# Helper function to ensure the deliverers are not added to the database multiple times.
-def find_or_add_deliverer(deliverer_id):
-    existing_deliverer = session.query(Deliverer).filter_by(deliverer_id=deliverer_id).first()
-    if existing_deliverer:
-        return existing_deliverer
-    # So this else is not possible right? Unless new people are hired i guess
-    else:
-        new_deliverer = Deliverer(deliverer_id=deliverer_id)
-        session.add(new_deliverer)
-        session.commit()
-        return new_deliverer
-
-
-# To end the session
-session.close()
-
-
-# Defining common methods. These ones have to be implemented at some point
-
-# Function that calculates the price of a regular pizza
-def calculate_pizza_price(pizza):
-    # SQL query: finds the relevant ingredient cost for our 'ingredient' that belongs to our 'pizza'
-    # and sums all these costs
-    return sum(ingredient.ingredient_cost for ingredient in pizza.ingredients) * decimal.Decimal(1.49)
-
-
-# TODO: Method to calculate the price of an entire order
 
 # Function to create a new order
 def create_new_order():
@@ -190,6 +115,48 @@ def create_new_order():
 
     return CurrentOrder().order
 
+# Helper function to check if the delivery already exists
+def find_or_create_delivery(delivery_id):
+    existing_delivery = session.query(Delivery).filter_by(delivery_id=delivery_id).first()
+    if existing_delivery:
+        return existing_delivery
+    else:
+        new_delivery = Delivery(delivery_id=delivery_id)
+        session.add(new_delivery)
+        session.commit()
+        return new_delivery
+
+######### DOUBLE!!!
+
+def get_or_create_deliverer(deliverer):
+    # Check if a deliverer with the same first name and last name already exists
+    existing_deliverer = session.query(Deliverer).filter_by(
+        deliverer_first_name=deliverer["deliverer_first_name"],
+        deliverer_last_name=deliverer["deliverer_last_name"]
+    ).first()
+
+    if existing_deliverer:
+        return existing_deliverer
+    else:
+        # Create a new deliverer if not found
+        new_deliverer = Deliverer(
+            deliverer_first_name=deliverer["deliverer_first_name"],
+            deliverer_last_name=deliverer["deliverer_last_name"]
+        )
+        session.add(new_deliverer)
+        session.commit()
+        return new_deliverer
+
+# Helper function to ensure the deliverers are not added to the database multiple times.
+def find_deliverer(deliverer_id):
+    existing_deliverer = session.query(Deliverer).filter_by(deliverer_id=deliverer_id).first()
+    if existing_deliverer:
+        return existing_deliverer
+    else:
+        return "Deliverer is not found!"
+
+
+''' PLACING & PROCESSING THE ORDER FUNCTIONS'''
 
 # Method to place the current order instance to be proceeded
 def place_current_order():
@@ -200,10 +167,9 @@ def place_current_order():
         CurrentOrder().update_status("placed")
         CurrentOrder().update_timestamp()
 
-
+# Method to find the customer that belongs to the current order
 def get_customer_from_order(order):
     return session.query(Customer).filter(Customer.customer_id == order.customer_id).first()
-
 
 # Method to add a pizza to the current order of a customer
 def add_pizza_to_current_order(pizza_id):
@@ -230,11 +196,11 @@ def add_pizza_to_current_order(pizza_id):
     session.commit()
 
 
-# TODO: Method to add a product to an order
+# TODO: Method to add an extra item to an order
 def add_extra_item_to_order(product, order):
     pass
 
-
+# Method to remove a pizza from the current order if need be
 def remove_pizza_from_current_order(pizza_id):
     current_order_singleton = CurrentOrder()
 
@@ -263,12 +229,12 @@ def remove_pizza_from_current_order(pizza_id):
         session.commit()
 
 
-# TODO: Method to remove a product from an order
+# TODO: Method to remove an extra item from an order
 def remove_extra_item_from_current_order(product, order):
     pass
 
 
-# Cancels the order with the given order ID and refreshes the page."""
+# Method to cancel the order with the given order ID and refresh the page.
 def cancel_order(order_id):
     order_to_cancel = session.query(Order).filter_by(order_id=order_id).first()
     if order_to_cancel:
@@ -276,23 +242,7 @@ def cancel_order(order_id):
         session.commit()  # Save the changes to the database
 
 
-# TODO: Create a new delivery
-def create_delivery():
-    pass
-
-
-# TODO: Method to add an order to a delivery
-def add_order_to_delivery(order):
-    pass
-
-
-# TODO: Method to remove an order from a delivery
-def remove_order_from_delivery(order):
-    pass
-
-
 ''' CUSTOMER & DELIVERY FUNCTIONS'''
-
 
 # Function to register a new customer
 def register_customer(first_name, last_name, email, password, gender, dob, phone, street, city, country,
@@ -316,13 +266,47 @@ def register_customer(first_name, last_name, email, password, gender, dob, phone
 
 
 # TODO: Method to remove a customer. Do we need this?
-def remove_customer(customer):
+def remove_customer(customer_ID):
+
     pass
 
 
 # TODO: for delivery purposes
 def get_customer_id():
     pass
+
+def get_order(order_id):
+    existing_order = session.query(Order).filter_by(order_id=order_id).first()
+    if existing_order:
+        return existing_order
+    else:
+        return "Order not found!"
+
+# TODO: Create a new delivery
+def create_delivery():
+    pass
+
+
+# TODO: Method to add an order to a delivery
+def add_order_to_delivery(order):
+    pass
+
+
+# TODO: Method to remove an order from a delivery
+def remove_order_from_delivery(order):
+    pass
+
+''' CALCULATION & DISCOUNT FUNCTIONS '''
+
+# Function that calculates the price of a regular pizza
+def calculate_pizza_price(pizza):
+    # SQL query: finds the relevant ingredient cost for our 'ingredient' that belongs to our 'pizza'
+    # and sums all these costs
+    return sum(ingredient.ingredient_cost for ingredient in pizza.ingredients) * decimal.Decimal(1.49)
+
+
+# TODO: Method to calculate the price of an entire order
+
 
 # TODO: Method to calculate when someone has a right to the 10% discount (so after 10 pizzas ordered)
 

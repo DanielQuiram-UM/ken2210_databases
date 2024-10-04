@@ -59,6 +59,7 @@ def populate_data():
         match_ingredients_to_pizza(pizza_name, ingredient_names)
 
     # Filling in the extra items table
+    #TODO: do we still need this if i create the map below?
     extra_items = ["Coca Cola", "Ice Tea", "White Wine", "Red Wine", "Homemade Lemonade", "Tiramisu", "Nutella Pizza"]
 
     deliverers = [
@@ -71,6 +72,8 @@ def populate_data():
 
     for deliverer in deliverers:
         get_or_create_deliverer(deliverer)
+
+#TODO: CREATE EXTRA_ITEM_COST MAP
 
 if __name__ == '__main__':
     init_db()

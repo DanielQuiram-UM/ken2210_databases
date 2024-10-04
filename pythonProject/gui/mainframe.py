@@ -618,7 +618,7 @@ class MainFrame(ctk.CTkFrame):
 
 #TODO: add estimated delivery time to order confirmation --> Daniel
 
-#TODO: tracking teh status of the delivery
+#TODO: tracking the status of the delivery
 
 #TODO: earnings page solely visible for the boss of the pizza place
 
