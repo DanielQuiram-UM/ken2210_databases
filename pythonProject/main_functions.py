@@ -283,8 +283,8 @@ def assign_deliverer(postal_code):
 def process_orders(session):
     now = datetime.now()
     print("Checking for 'placed orders")
-    #placed_orders = session.query(Order).filter_by(order_status='placed').filter(Order.order_timestamp <= now - timedelta(minutes=5)).all()
-    placed_orders = session.query(Order).filter_by(order_status='placed').all()
+    placed_orders = session.query(Order).filter_by(order_status='placed').filter(Order.order_timestamp <= now - timedelta(minutes=5)).all()
+    #placed_orders = session.query(Order).filter_by(order_status='placed').all()
     for order in placed_orders:
         order.order_status = 'in process'
         session.commit()
