@@ -10,7 +10,7 @@ from pythonProject.currentCustomer import CurrentCustomer
 from pythonProject.database import session
 from pythonProject.main_functions import calculate_pizza_price, add_pizza_to_current_order, place_current_order, \
     remove_pizza_from_current_order, create_new_order, cancel_order, get_customer_from_order
-from pythonProject.models import Pizza, Ingredient, Order, Deliverer
+from pythonProject.models import Pizza, Ingredient, Order, Deliverer, Delivery
 
 
 #to remind ourselves: self refers to working in the current GUI frame
@@ -19,6 +19,8 @@ class MainFrame(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
+
+        self.current_page = "Pizzas"
 
         self.configure(width=800, height=600)
 
@@ -34,6 +36,20 @@ class MainFrame(ctk.CTkFrame):
         order_icon = CTkImage(dark_image=order_icon_data, light_image=order_icon_data, size=(30, 30))
 
         CTkLabel(master=sidebar_frame, text="", image=logo_img).pack(pady=(10, 0), anchor="center")
+
+        # Add a Refresh Button with the refresh icon
+        refresh_icon_data = Image.open("../icons/refresh_icon.png")
+        refresh_icon = CTkImage(dark_image=refresh_icon_data, light_image=refresh_icon_data, size=(30, 30))
+        refresh_button = CTkButton(
+            master=sidebar_frame,
+            text="",
+            image=refresh_icon,
+            command=self.refresh_current_frame,  # Command linked to the refresh function
+            text_color="#fff",
+            fg_color="#1A936F",
+            hover_color="#207244"
+        )
+        refresh_button.pack(pady=10, padx=10, fill="x")
 
         # Navigation Buttons on the Sidebar
         navigation_buttons = [
@@ -105,6 +121,7 @@ class MainFrame(ctk.CTkFrame):
 
     def show_page(self, page_name):
         """Switch to the selected page within the main view."""
+        self.current_page = page_name
         # Clear any existing content in the main view
         for widget in self.main_view.winfo_children():
             widget.destroy()
@@ -489,70 +506,111 @@ class MainFrame(ctk.CTkFrame):
             ingredient_name_label.pack(anchor="w", side="left", padx=(20, 0))
 
     def create_deliveries_page(self):
-        """Create the Orders to be Delivered page view."""
+        """Create the Orders and Active Deliveries page view."""
         # Clear existing widgets in the main view
         for widget in self.main_view.winfo_children():
             widget.destroy()
 
         # Create a title label for the page
-        CTkLabel(master=self.main_view, text="Orders to be Delivered", font=("Arial Black", 25),
+        CTkLabel(master=self.main_view, text="Orders and Active Deliveries", font=("Arial Black", 25),
                  text_color="#2A8C55").pack(pady=20)
+
+        # Create a scrollable frame for listing all orders and deliveries
+        scrollable_frame = ctk.CTkScrollableFrame(master=self.main_view, fg_color="#f5f5f5", width=660, height=520)
+        scrollable_frame.pack(pady=10, padx=10, fill="both", expand=True)
 
         # Query for orders with status 'in process'
         orders = session.query(Order).filter_by(order_status='in process').order_by(Order.order_timestamp.asc()).all()
 
-        if not orders:
+        # Display Orders to be delivered
+        if orders:
+            CTkLabel(master=scrollable_frame, text="Orders to be Delivered:", font=("Arial", 18, "bold"),
+                     text_color="#333").pack(pady=10, anchor="w", padx=(20, 0))
+
+            for order in orders:
+                # Create a frame for each order
+                order_frame = CTkFrame(master=scrollable_frame, fg_color="#eaeaea", height=140, corner_radius=8)
+                order_frame.pack(pady=5, padx=10, fill="x")
+
+                # Retrieve the customer information using the get_customer_from_order function
+                customer = get_customer_from_order(order)
+
+                # Calculate time since order was placed
+                time_since_order = datetime.now() - order.order_timestamp
+                minutes_since_order = time_since_order.total_seconds() // 60
+
+                # Create a display message for how long ago the order was placed
+                if minutes_since_order > 120:
+                    time_message = ">2 hours ago"
+                else:
+                    time_message = f"{int(minutes_since_order)} minutes ago"
+
+                # Display the customer name, postal address, and order date at the top
+                CTkLabel(master=order_frame,
+                         text=f"Customer: {customer.customer_first_name} {customer.customer_last_name} - Address: {customer.address.postal_code}",
+                         font=("Arial", 16, "bold"), text_color="#2A8C55").pack(pady=(10, 5), anchor="w", padx=(20, 0))
+                CTkLabel(master=order_frame,
+                         text=f"Order Date: {order.order_timestamp.strftime('%Y-%m-%d %H:%M:%S')} ({time_message})",
+                         font=("Arial", 14), text_color="#555").pack(pady=(0, 10), anchor="w", padx=(20, 0))
+
+                # Create a sub-frame for listing all pizzas in the order
+                pizza_list_frame = CTkFrame(master=order_frame, fg_color="#f5f5f5", height=60, corner_radius=8)
+                pizza_list_frame.pack(pady=5, padx=20, fill="x")
+
+                # Loop through the pizzas in the order and list each one with its quantity
+                for pizza_order in order.pizza_orders:
+                    pizza = session.query(Pizza).filter_by(pizza_id=pizza_order.pizza_id).first()
+                    if pizza:
+                        pizza_details_label = CTkLabel(
+                            master=pizza_list_frame,
+                            text=f"{pizza.pizza_name} - Quantity: {pizza_order.pizza_amount}",
+                            font=("Arial", 14),
+                            text_color="#333"
+                        )
+                        pizza_details_label.pack(anchor="w", pady=(2, 2), padx=(10, 0))
+
+        else:
             # If no orders are in process
-            CTkLabel(master=self.main_view, text="No orders to be delivered at the moment.", font=("Arial", 16),
+            CTkLabel(master=scrollable_frame, text="No orders to be delivered at the moment.", font=("Arial", 16),
                      text_color="#555").pack(pady=20)
-            return
 
-        # Create a scrollable frame for listing all orders to be delivered
-        scrollable_frame = ctk.CTkScrollableFrame(master=self.main_view, fg_color="#f5f5f5", width=660, height=520)
-        scrollable_frame.pack(pady=10, padx=10, fill="both", expand=True)
+        # Query for active deliveries (orders with status 'being delivered') initiated within the last 30 minutes
+        thirty_minutes_ago = datetime.now() - timedelta(minutes=30)
+        deliveries = session.query(Delivery).filter(Delivery.initiation_time >= thirty_minutes_ago).all()
 
-        # Display each order in the scrollable frame
-        for order in orders:
-            # Create a frame for each order
-            order_frame = CTkFrame(master=scrollable_frame, fg_color="#eaeaea", height=140, corner_radius=8)
-            order_frame.pack(pady=5, padx=10, fill="x")
+        if deliveries:
+            CTkLabel(master=scrollable_frame, text="Active Deliveries:", font=("Arial", 18, "bold"),
+                     text_color="#333").pack(pady=20, anchor="w", padx=(20, 0))
 
-            # Retrieve the customer information using the get_customer_from_order function
-            customer = get_customer_from_order(order)
+            for delivery in deliveries:
+                delivery_frame = CTkFrame(master=scrollable_frame, fg_color="#eaeaea", height=160, corner_radius=8)
+                delivery_frame.pack(pady=5, padx=10, fill="x")
 
-            # Calculate time since order was placed
-            time_since_order = datetime.now() - order.order_timestamp
-            minutes_since_order = time_since_order.total_seconds() // 60
+                # Retrieve the deliverer information
+                deliverer = delivery.deliverer
+                delivery_time = datetime.now() - delivery.initiation_time
+                minutes_since_start = delivery_time.total_seconds() // 60
 
-            # Create a display message for how long ago the order was placed
-            if minutes_since_order > 120:
-                time_message = ">2 hours ago"
-            else:
-                time_message = f"{int(minutes_since_order)} minutes ago"
+                # Retrieve the orders in the delivery
+                delivery_orders = session.query(Order).filter_by(delivery_id=delivery.delivery_id).all()
 
-            # Display the customer name, postal address, and order date at the top
-            CTkLabel(master=order_frame,
-                     text=f"Customer: {customer.customer_first_name} {customer.customer_last_name} - Address: {customer.address.postal_code}",
-                     font=("Arial", 16, "bold"), text_color="#2A8C55").pack(pady=(10, 5), anchor="w", padx=(20, 0))
-            CTkLabel(master=order_frame,
-                     text=f"Order Date: {order.order_timestamp.strftime('%Y-%m-%d %H:%M:%S')} ({time_message})",
-                     font=("Arial", 14), text_color="#555").pack(pady=(0, 10), anchor="w", padx=(20, 0))
+                # Display the deliverer and time since delivery started
+                CTkLabel(master=delivery_frame,
+                         text=f"Deliverer: {deliverer.deliverer_first_name} {deliverer.deliverer_last_name} - Started {int(minutes_since_start)} minutes ago",
+                         font=("Arial", 16, "bold"), text_color="#2A8C55").pack(pady=(10, 5), anchor="w", padx=(20, 0))
 
-            # Create a sub-frame for listing all pizzas in the order
-            pizza_list_frame = CTkFrame(master=order_frame, fg_color="#f5f5f5", height=60, corner_radius=8)
-            pizza_list_frame.pack(pady=5, padx=20, fill="x")
+                # Display each order associated with the delivery
+                for order in delivery_orders:
+                    # Retrieve customer details
+                    customer = get_customer_from_order(order)
+                    CTkLabel(master=delivery_frame,
+                             text=f"Order for {customer.customer_first_name} {customer.customer_last_name} - {customer.address.postal_code}",
+                             font=("Arial", 14), text_color="#333").pack(pady=(2, 2), anchor="w", padx=(20, 0))
 
-            # Loop through the pizzas in the order and list each one with its quantity
-            for pizza_order in order.pizza_orders:
-                pizza = session.query(Pizza).filter_by(pizza_id=pizza_order.pizza_id).first()
-                if pizza:
-                    pizza_details_label = CTkLabel(
-                        master=pizza_list_frame,
-                        text=f"{pizza.pizza_name} - Quantity: {pizza_order.pizza_amount}",
-                        font=("Arial", 14),
-                        text_color="#333"
-                    )
-                    pizza_details_label.pack(anchor="w", pady=(2, 2), padx=(10, 0))
+        else:
+            # If no deliveries are active
+            CTkLabel(master=scrollable_frame, text="No active deliveries at the moment.", font=("Arial", 16),
+                     text_color="#555").pack(pady=20)
 
     def create_deliverers_page(self):
         """Create the Deliverers page view."""
@@ -592,9 +650,9 @@ class MainFrame(ctk.CTkFrame):
                      text=f"{deliverer.deliverer_first_name} {deliverer.deliverer_last_name}",
                      font=("Arial", 16, "bold"), text_color="black").pack(side="left", anchor="w")
 
-            # Determine what to display on the right (postal code or 'available')
+            # Check if the deliverer is currently assigned to a delivery
             if not deliverer.postal_code:
-                # Display 'available' in green text if no postal code is assigned
+                # Display 'Available' in green text if no postal code is assigned
                 CTkLabel(master=info_frame,
                          text="Available",
                          font=("Arial", 16), text_color="#2A8C55").pack(side="right", anchor="e")
@@ -604,11 +662,37 @@ class MainFrame(ctk.CTkFrame):
                          text=f"Postal Code: {deliverer.postal_code}",
                          font=("Arial", 16), text_color="black").pack(side="right", anchor="e")
 
+                # Check if the deliverer is on an active delivery
+                active_delivery = session.query(Delivery).filter_by(deliverer_id=deliverer.deliverer_id).first()
+                if active_delivery:
+                    # Calculate the time since the delivery was initiated
+                    time_since_delivery = datetime.now() - active_delivery.initiation_time
+                    minutes_since_delivery = time_since_delivery.total_seconds() // 60
+
+                    # Calculate remaining time for the delivery (30 minutes total)
+                    remaining_time = 30 - minutes_since_delivery
+
+                    if remaining_time > 0:
+                        # Display remaining time
+                        CTkLabel(master=info_frame,
+                                 text=f"Away for: {int(remaining_time)} minutes",
+                                 font=("Arial", 16), text_color="#FF4500").pack(side="right", anchor="e")
+                    else:
+                        # If time is up, show delivery complete message
+                        CTkLabel(master=info_frame,
+                                 text="Delivery Complete",
+                                 font=("Arial", 16), text_color="#2A8C55").pack(side="right", anchor="e")
+
     def create_earnings_page(self):
         pass
 
     def logout(self):
         self.parent.show_frame("LoginFrame")
+
+    def refresh_current_frame(self):
+        """Refresh the current frame by committing the session and reloading the page."""
+        session.commit()  # Commit any pending transactions to the database
+        self.show_page(self.current_page)
 
 #TODO: display dietary status underneath each pizza --> Daniel
 

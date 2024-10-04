@@ -1,6 +1,3 @@
-from pythonProject.models import Customer
-from pythonProject.database import session
-
 class CurrentCustomer:
     _instance = None
 

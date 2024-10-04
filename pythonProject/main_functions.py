@@ -2,16 +2,12 @@
     Main logic for interacting with the database
 """
 import decimal
-from pickletools import decimalnl_long
-
+from datetime import datetime, timedelta
 import bcrypt
-from sqlalchemy import text
-from sqlalchemy.exc import NoResultFound
-
 from pythonProject.currentCustomer import CurrentCustomer
 from pythonProject.currentOrder import CurrentOrder
 from pythonProject.models import Pizza, Ingredient, ExtraItem, Customer, Order, Delivery, Deliverer, PizzaOrder, \
-    ExtraItemOrder
+    ExtraItemOrder, Customer_Address
 from pythonProject.database import session
 
 ''' FOOD FUNCTIONS'''
@@ -41,6 +37,25 @@ def get_or_create_ingredient(ingredient):
         session.commit()
         return new_ingredient
 
+
+def get_or_create_deliverer(deliverer):
+    # Check if a deliverer with the same first name and last name already exists
+    existing_deliverer = session.query(Deliverer).filter_by(
+        deliverer_first_name=deliverer["deliverer_first_name"],
+        deliverer_last_name=deliverer["deliverer_last_name"]
+    ).first()
+
+    if existing_deliverer:
+        return existing_deliverer
+    else:
+        # Create a new deliverer if not found
+        new_deliverer = Deliverer(
+            deliverer_first_name=deliverer["deliverer_first_name"],
+            deliverer_last_name=deliverer["deliverer_last_name"]
+        )
+        session.add(new_deliverer)
+        session.commit()
+        return new_deliverer
 
 # Function that represents the junction table pizza ingredients
 def match_ingredients_to_pizza(pizza_name, ingredient_names):
@@ -255,16 +270,86 @@ def register_customer(first_name, last_name, email, password, gender, dob, phone
     session.add(new_customer)
     session.commit()
 
+# Method to assign a postal code to a deliverer
+def assign_deliverer(postal_code):
 
-# TODO: Method to remove a customer. Do we need this?
-def remove_customer(customer_ID):
+    deliverer = session.query(Deliverer).filter_by(postal_code=None).first()
+    if deliverer:
+        deliverer.postal_code = postal_code
+        session.commit()
+        return deliverer
+    return None
 
-    pass
+def process_orders(session):
+    now = datetime.now()
+    print("Checking for 'placed orders")
+    #placed_orders = session.query(Order).filter_by(order_status='placed').filter(Order.order_timestamp <= now - timedelta(minutes=5)).all()
+    placed_orders = session.query(Order).filter_by(order_status='placed').all()
+    for order in placed_orders:
+        order.order_status = 'in process'
+        session.commit()
 
+def deliver_orders(session):
+    """Process orders that are in 'in process' status and assign them to deliveries."""
 
-# TODO: for delivery purposes
-def get_customer_id():
-    pass
+    print("Checking for 'in process' orders...")
+    orders = session.query(Order).filter_by(order_status='in process').all()
+    if not orders:
+        print("No orders to process.")
+        return
+
+    # Group orders by postal code
+    postal_code_groups = {}
+    for order in orders:
+        customer_address = session.query(Customer_Address).join(Customer).filter(
+            Customer.customer_id == order.customer_id).first()
+        if customer_address:
+            postal_code = customer_address.postal_code
+            if postal_code not in postal_code_groups:
+                postal_code_groups[postal_code] = []
+            postal_code_groups[postal_code].append(order)
+
+    for postal_code, orders in postal_code_groups.items():
+        deliverer = assign_deliverer(postal_code)
+        if deliverer is None:
+            print(f"No available deliverer for postal code {postal_code}.")
+            continue
+
+        new_delivery = Delivery(
+            deliverer_id=deliverer.deliverer_id,
+            initiation_time=datetime.now()
+        )
+        session.add(new_delivery)
+        session.commit()
+
+        for order in orders:
+            order.delivery_id = new_delivery.delivery_id
+            order.order_status = 'being delivered'
+            session.commit()
+
+        print(f"Assigned {len(orders)} order(s) to deliverer {deliverer.deliverer_first_name} {deliverer.deliverer_last_name} for postal code {postal_code}.")
+
+def monitor_deliveries(session):
+    print("Checking for completed deliveries...")
+    now = datetime.now()
+    completed_deliveries = session.query(Delivery).filter(Delivery.initiation_time <= now - timedelta(minutes=30)).all()
+
+    if not completed_deliveries:
+        print("No deliveries to complete.")
+        return
+
+    for delivery in completed_deliveries:
+        orders = session.query(Order).filter_by(delivery_id=delivery.delivery_id).all()
+        for order in orders:
+            order.order_status = 'completed'
+
+        delivery.deliverer.postal_code = None
+        session.commit()
+
+        session.delete(delivery)
+        session.commit()
+
+        print(f"Marked delivery {delivery.delivery_id} as completed and set {len(orders)} order(s) to 'completed' status. Delivery instance deleted.")
 
 def get_order(order_id):
     existing_order = session.query(Order).filter_by(order_id=order_id).first()
