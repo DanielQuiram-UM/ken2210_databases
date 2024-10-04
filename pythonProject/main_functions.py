@@ -41,25 +41,6 @@ def get_or_create_ingredient(ingredient):
         return new_ingredient
 
 
-def get_or_create_deliverer(deliverer):
-    # Check if a deliverer with the same first name and last name already exists
-    existing_deliverer = session.query(Deliverer).filter_by(
-        deliverer_first_name=deliverer["deliverer_first_name"],
-        deliverer_last_name=deliverer["deliverer_last_name"]
-    ).first()
-
-    if existing_deliverer:
-        return existing_deliverer
-    else:
-        # Create a new deliverer if not found
-        new_deliverer = Deliverer(
-            deliverer_first_name=deliverer["deliverer_first_name"],
-            deliverer_last_name=deliverer["deliverer_last_name"]
-        )
-        session.add(new_deliverer)
-        session.commit()
-        return new_deliverer
-
 # Function that represents the junction table pizza ingredients
 def match_ingredients_to_pizza(pizza_name, ingredient_names):
     pizza = get_or_create_pizza(pizza_name)
@@ -84,11 +65,11 @@ def get_or_create_pizza_suborder(order_id):
 
 # Helper function to check if extra item already exists
 def get_or_create_extra_item(extra_item):
-    existing_item = session.query(ExtraItem).filter_by(item_name=extra_item).first()
+    existing_item = session.query(ExtraItem).filter_by(item_name=extra_item["item_name"]).first()
     if existing_item:
         return existing_item
     else:
-        new_item = ExtraItem(item_name=extra_item)
+        new_item = ExtraItem(item_name=extra_item["item_name"], cost=extra_item["cost"], dietary_status=extra_item["dietary_status"])
         session.add(new_item)
         session.commit()
         return new_item
@@ -119,6 +100,7 @@ def find_or_create_customer(customer_email):
         session.commit()
         return new_customer
 
+
 # Function to create a new order
 def create_new_order():
     current_order_singleton = CurrentOrder()
@@ -132,6 +114,7 @@ def create_new_order():
     current_order_singleton.set_order(new_order)  # Update the singleton with the new order
 
     return CurrentOrder().order
+
 
 # Helper function to check if the delivery already exists
 def find_or_create_delivery(delivery_id):
@@ -205,9 +188,29 @@ def add_pizza_to_current_order(pizza_id):
     session.commit()
 
 
-# TODO: Method to add an extra item to an order
+# Method to add an extra item to the current order of a customer
 def add_extra_item_to_order(product, order):
-    pass
+        current_order_singleton = CurrentOrder()
+        current_order = current_order_singleton.order
+
+        if current_order is None:
+            current_order = create_new_order()
+        # Check if the extra_item is already in the order
+        existing_extra_item_order = session.query(ExtraItemOrder).filter(
+            ExtraItemOrder.order_id == current_order.order_id,
+            ExtraItemOrder.item_id == item_id
+        ).first()
+
+        if existing_extra_item_order:
+            # If the extra item is already in the order, increase the amount
+            existing_extra_item_order.item_amount += 1
+        else:
+            # Create a new ExtraItemOrder entry
+            new_extra_item_order = ExtraItemOrder(order_id=current_order.order_id, item_id=item_id, item_amount=1)
+            session.add(new_extra_item_order)
+
+        # Commit the session to save changes
+        session.commit()
 
 # Method to remove a pizza from the current order if need be
 def remove_pizza_from_current_order(pizza_id):
@@ -238,9 +241,33 @@ def remove_pizza_from_current_order(pizza_id):
         session.commit()
 
 
-# TODO: Method to remove an extra item from an order
+# Method to remove an extra item from the current order if need be
 def remove_extra_item_from_current_order(product, order):
-    pass
+    current_order_singleton = CurrentOrder()
+
+    # Get the current order
+    current_order = current_order_singleton.order
+
+    # If no current order exists, exit the method as there's nothing to remove
+    if not current_order:
+        return
+
+    # Check if the pizza is already in the order
+    existing_extra_item_order = session.query(ExtraItemOrder).filter(
+        ExtraItemOrder.order_id == current_order.order_id,
+        ExtraItemOrder.item_id == item_id
+    ).first()
+
+    if existing_extra_item_order:
+        # If the extra item amount is greater than 1, reduce the amount by 1
+        if existing_extra_item_order.item_amount > 1:
+            existing_extra_item_order.item_amount -= 1
+        else:
+            # If the amount is 1, remove the extra item order from the session
+            session.delete(existing_extra_item_order)
+
+        # Commit the session to save changes
+        session.commit()
 
 
 # Method to cancel the order with the given order ID and refresh the page.
@@ -416,6 +443,8 @@ def find_deliverer(deliverer_id):
         return existing_deliverer
     else:
         return "Deliverer is not found!"
+
+
 ''' CALCULATION & DISCOUNT FUNCTIONS '''
 
 # Function that calculates the price of a regular pizza

@@ -3,7 +3,7 @@ import random
 
 from pythonProject.database import init_db
 from pythonProject.main_functions import get_or_create_pizza, get_or_create_ingredient, match_ingredients_to_pizza, \
-    get_or_create_deliverer
+    get_or_create_deliverer, get_or_create_extra_item
 from pythonProject.models import Deliverer
 
 
@@ -63,7 +63,18 @@ def populate_data():
 
     # Filling in the extra items table
     #TODO: do we still need this if i create the map below?
-    extra_items = ["Coca Cola", "Ice Tea", "White Wine", "Red Wine", "Homemade Lemonade", "Tiramisu", "Nutella Pizza"]
+    extra_items = [
+        {"item_name": "Coca-Cola", "cost": 3.00, "dietary_status": "vegan"},
+        {"item_name": "Ice Tea", "cost": 3.00, "dietary_status": "vegan"},
+        {"item_name": "White Wine", "cost": 4.00, "dietary_status": "vegan"},
+        {"item_name": "Red Wine", "cost": 4.00, "dietary_status": "vegan"},
+        {"item_name": "Homemade Lemonade", "cost": 3.50, "dietary_status": "vegan"},
+        {"item_name": "Tiramisu", "cost": 5.00, "dietary_status": "vegetarian"},
+        {"item_name": "Nutella Pizza", "cost": 5.00, "dietary_status": "vegan"}
+        ]
+
+    for item_name in extra_items:
+        get_or_create_extra_item(item_name)
 
     deliverers = [
         {"deliverer_first_name": "Anne", "deliverer_last_name": "Chovy"},

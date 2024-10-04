@@ -11,7 +11,7 @@ from pythonProject.currentCustomer import CurrentCustomer
 from pythonProject.database import session
 from pythonProject.main_functions import calculate_pizza_price, add_pizza_to_current_order, place_current_order, \
     remove_pizza_from_current_order, create_new_order, cancel_order, get_customer_from_order
-from pythonProject.models import Pizza, Ingredient, Order, Deliverer, Delivery
+from pythonProject.models import Pizza, Ingredient, Order, Deliverer, Delivery, ExtraItem
 
 
 #to remind ourselves: self refers to working in the current GUI frame
@@ -55,7 +55,9 @@ class MainFrame(ctk.CTkFrame):
         # Navigation Buttons on the Sidebar
         navigation_buttons = [
             ("Pizzas", lambda: self.show_page("Pizzas")),
+            ("Extra Items", lambda: self.show_page("Extra Items")),
             ("Ingredients", lambda: self.show_page("Ingredients")),
+
         ]
 
         # Create each button in the sidebar for main navigation
@@ -108,6 +110,7 @@ class MainFrame(ctk.CTkFrame):
         # Initialize different pages in the main view
         self.pages = {
             "Pizzas": self.create_pizzas_page,
+            "Extra Items": self.create_extra_items_page,
             "Current Order": self.create_current_order_page,
             "Account": self.create_account_page,
             "My Orders": self.create_orders_page,
@@ -263,6 +266,7 @@ class MainFrame(ctk.CTkFrame):
         else:
             # No customer set, show a placeholder message
             CTkLabel(master=self.main_view, text="No customer information available.", font=("Arial", 15)).pack(pady=10)
+
     def create_current_order_page(self):
         """Create the Current Order page view."""
         # Clear existing widgets in the main view
@@ -701,7 +705,98 @@ class MainFrame(ctk.CTkFrame):
 
 #TODO: display dietary status underneath each pizza --> Daniel
 
-#TODO: create extra items --> Merel will slay
+    def create_extra_items_page(self):
+        """Create the Extra Items page view."""
+        # Retrieve all extra item objects from the database using the session.
+        extra_items = session.query(ExtraItem).all()
+
+        # Retrieve the current order instance
+        current_order = CurrentOrder().order
+
+        # Create a title label for the page
+        CTkLabel(master=self.main_view, text="Our Extra Items", font=("Arial Black", 25), text_color="#2A8C55").pack(pady=20)
+
+        # Create a container frame for displaying the extra item details in a grid format
+        scrollable_frame = ctk.CTkScrollableFrame(master=self.main_view, fg_color="#f5f5f5", width=660, height=520)
+        scrollable_frame.pack(pady=10, padx=10, fill="both", expand=True)
+
+        # Schedule the layout of extra item details to allow for complete rendering
+        self.main_view.after(200, self.layout_extra_item_details, extra_items, current_order, scrollable_frame)
+
+    def layout_extra_item_details(self, extra_items, current_order, scrollable_frame):
+        """Layout extra item details after the main view has been rendered."""
+        # Loop through each extra item and display its name, dietary status and the amount controls
+        for item in extra_items:
+            # Show the total price of the extra item
+            item_price = item.cost
+
+            #Show the dietary status of the extra item
+            dietary_status = item.dietary_status
+            #TODO: make sure it shows up in the GUI!
+            # Check the current amount of this extra item in the order, if it exists
+            item_amount = 0
+            if current_order and current_order.extra_item_orders:
+                for extra_item_order in current_order.extra_item_orders:
+                    if extra_item_order.item_id == item.item_id:
+                        item_amount = extra_item_order.item_amount
+                        break
+
+            # Create a frame for each pizza
+            extra_item_frame = CTkFrame(master=scrollable_frame, fg_color="#eaeaea", corner_radius=8)
+            extra_item_frame.pack(pady=5, padx=10, fill="x")
+
+            # Create a frame to hold the extra item name and price in the same row
+            name_price_frame = CTkFrame(master=extra_item_frame, fg_color="#eaeaea")
+            name_price_frame.pack(fill="x", pady=(10, 0))
+
+            # Add the extra item name label on the left within name_price_frame
+            extra_item_name_label = CTkLabel(master=name_price_frame, text=item.item_name,
+                                            font=("Arial", 16, "bold"),
+                                            text_color="#000")
+            extra_item_name_label.pack(anchor="w", side="left", padx=(20, 0))
+
+            # Add the extra item price label on the right within name_price_frame
+            price_label = CTkLabel(master=name_price_frame, text=f"{item_price:.2f}€",
+                                    font=("Arial", 16, "bold"),
+                                    text_color="#000")
+            price_label.pack(anchor="e", side="right", padx=(10, 20))
+
+            # Create a new frame to hold the amount controls
+            details_frame = CTkFrame(master=extra_item_frame, fg_color="#eaeaea")
+            details_frame.pack(fill="x", pady=(5, 10))
+
+            # Create a control frame for the buttons and ensure it's positioned correctly
+            control_frame = CTkFrame(master=extra_item_frame, fg_color="#eaeaea")
+            control_frame.pack(anchor="e", side="bottom", padx=20,
+                                 pady=(5, 10))  # Always pack at the bottom
+
+            # Add "-" (=minus) button to decrease the extra item amount in the order
+            decrease_button = CTkButton(
+                master=control_frame,
+                text="-",
+                font=("Arial", 14),
+                fg_color="#1A936F",
+                text_color="#fff",
+                hover_color="#207244",
+                width=30,
+                height=30,
+                command=lambda item_id=item.item_id: self.remove_extra_item_from_current_order(item_id)
+                )
+            decrease_button.pack(side="left", padx=(0, 5))
+
+            # Add "+" button to increase the extra item amount in the order
+            increase_button = CTkButton(
+                master=control_frame,
+                text="+",
+                font=("Arial", 14),
+                fg_color="#1A936F",
+                text_color="#fff",
+                hover_color="#207244",
+                width=30,
+                height=30,
+                command=lambda item_id=item.item_id: self.add_extra_item_to_current_order(item_id)
+                )
+            increase_button.pack(side="left", padx=(5, 0))
 
 #TODO: continue shopping button after adding a pizza / extra item --> Merel
 
