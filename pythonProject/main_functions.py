@@ -271,7 +271,7 @@ def register_customer(first_name, last_name, email, password, gender, dob, phone
     session.commit()
 
 # Method to assign a postal code to a deliverer
-def assign_deliverer(postal_code):
+def assign_deliverer(postal_code, session):
 
     deliverer = session.query(Deliverer).filter_by(postal_code=None).first()
     if deliverer:
@@ -310,7 +310,7 @@ def deliver_orders(session):
             postal_code_groups[postal_code].append(order)
 
     for postal_code, orders in postal_code_groups.items():
-        deliverer = assign_deliverer(postal_code)
+        deliverer = assign_deliverer(postal_code, session)
         if deliverer is None:
             print(f"No available deliverer for postal code {postal_code}.")
             continue
@@ -333,6 +333,7 @@ def monitor_deliveries(session):
     print("Checking for completed deliveries...")
     now = datetime.now()
     completed_deliveries = session.query(Delivery).filter(Delivery.initiation_time <= now - timedelta(minutes=30)).all()
+    #completed_deliveries = session.query(Delivery).filter(Delivery.initiation_time <= now - timedelta(minutes=2)).all()
 
     if not completed_deliveries:
         print("No deliveries to complete.")

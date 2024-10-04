@@ -576,6 +576,7 @@ class MainFrame(ctk.CTkFrame):
 
         # Query for active deliveries (orders with status 'being delivered') initiated within the last 30 minutes
         thirty_minutes_ago = datetime.now() - timedelta(minutes=30)
+        #thirty_minutes_ago = datetime.now() - timedelta(minutes=2)
         deliveries = session.query(Delivery).filter(Delivery.initiation_time >= thirty_minutes_ago).all()
 
         if deliveries:
@@ -671,6 +672,7 @@ class MainFrame(ctk.CTkFrame):
 
                     # Calculate remaining time for the delivery (30 minutes total)
                     remaining_time = 30 - minutes_since_delivery
+                    #remaining_time = 2 - minutes_since_delivery
 
                     if remaining_time > 0:
                         # Display remaining time
