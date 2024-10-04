@@ -88,7 +88,7 @@ def get_or_create_item_suborder(order_id):
         return new_item_suborder
 
 
-''' CUSTOMER & DELIVERY INFO'''
+''' CUSTOMER & ORDER DELIVERY INFO'''
 
 # Helper function to check if a customer already exists
 def find_or_create_customer(customer_email):
@@ -126,7 +126,6 @@ def find_or_create_delivery(delivery_id):
         session.commit()
         return new_delivery
 
-######### DOUBLE!!!
 
 def get_or_create_deliverer(deliverer):
     # Check if a deliverer with the same first name and last name already exists
@@ -147,18 +146,10 @@ def get_or_create_deliverer(deliverer):
         session.commit()
         return new_deliverer
 
-# Helper function to ensure the deliverers are not added to the database multiple times.
-def find_deliverer(deliverer_id):
-    existing_deliverer = session.query(Deliverer).filter_by(deliverer_id=deliverer_id).first()
-    if existing_deliverer:
-        return existing_deliverer
-    else:
-        return "Deliverer is not found!"
-
 
 ''' PLACING & PROCESSING THE ORDER FUNCTIONS'''
 
-# Method to place the current order instance to be proceeded
+# Method to place the current order instance
 def place_current_order():
     current_order = CurrentOrder().order
     if current_order is None:
@@ -296,6 +287,13 @@ def add_order_to_delivery(order):
 def remove_order_from_delivery(order):
     pass
 
+# Helper function to ensure the deliverers are not added to the database multiple times.
+def find_deliverer(deliverer_id):
+    existing_deliverer = session.query(Deliverer).filter_by(deliverer_id=deliverer_id).first()
+    if existing_deliverer:
+        return existing_deliverer
+    else:
+        return "Deliverer is not found!"
 ''' CALCULATION & DISCOUNT FUNCTIONS '''
 
 # Function that calculates the price of a regular pizza
