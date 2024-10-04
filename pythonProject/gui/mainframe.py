@@ -10,7 +10,7 @@ from pythonProject.currentOrder import CurrentOrder
 from pythonProject.currentCustomer import CurrentCustomer
 from pythonProject.database import session
 from pythonProject.main_functions import calculate_pizza_price, add_pizza_to_current_order, place_current_order, \
-    remove_pizza_from_current_order, create_new_order, cancel_order, get_customer_from_order
+    remove_pizza_from_current_order, create_new_order, cancel_order, get_customer_from_order, get_dietary_status
 from pythonProject.models import Pizza, Ingredient, Order, Deliverer, Delivery, ExtraItem
 
 
@@ -159,6 +159,8 @@ class MainFrame(ctk.CTkFrame):
             # Calculate the total price of the pizza based on its ingredients
             total_price = calculate_pizza_price(pizza)
 
+            dietary_status = get_dietary_status(pizza)
+
             # Check the current amount of this pizza in the order, if it exists
             pizza_amount = 0
             if current_order and current_order.pizza_orders:
@@ -176,8 +178,13 @@ class MainFrame(ctk.CTkFrame):
             name_price_frame.pack(fill="x", pady=(10, 0))
 
             # Add the Pizza name label on the left within name_price_frame
-            pizza_name_label = CTkLabel(master=name_price_frame, text=pizza.pizza_name, font=("Arial", 16, "bold"),
-                                        text_color="#000")
+            pizza_name_label = CTkLabel(
+                master=name_price_frame,
+                text=f"{pizza.pizza_name} ({dietary_status})",  # Include dietary status in the label
+                font=("Arial", 16, "bold"),
+                text_color="#000"
+            )
+
             pizza_name_label.pack(anchor="w", side="left", padx=(20, 0))
 
             # Add the Pizza price label on the right within name_price_frame
@@ -200,24 +207,10 @@ class MainFrame(ctk.CTkFrame):
             control_frame = CTkFrame(master=pizza_frame, fg_color="#eaeaea")
             control_frame.pack(anchor="e", side="bottom", padx=20, pady=(5, 10))  # Always pack at the bottom
 
-            # Add "-" button to decrease the pizza amount in the order
-            decrease_button = CTkButton(
-                master=control_frame,
-                text="-",
-                font=("Arial", 14),
-                fg_color="#1A936F",
-                text_color="#fff",
-                hover_color="#207244",
-                width=30,
-                height=30,
-                command=lambda pizza_id=pizza.pizza_id: self.remove_pizza_from_current_order(pizza_id)
-            )
-            decrease_button.pack(side="left", padx=(0, 5))
-
             # Add "+" button to increase the pizza amount in the order
             increase_button = CTkButton(
                 master=control_frame,
-                text="+",
+                text="+ Add to order",
                 font=("Arial", 14),
                 fg_color="#1A936F",
                 text_color="#fff",
@@ -348,13 +341,22 @@ class MainFrame(ctk.CTkFrame):
                     )
                     increase_button.pack(side="left", padx=(5, 0))
 
-            # Show the "Place Order" button if the order is not yet placed
-            place_order_button = CTkButton(
-                master=container_frame, text="Place Order", font=("Arial", 16, "bold"), fg_color="#1A936F",
-                text_color="#FFF",
-                width=200, height=40, command=lambda: self.place_order_and_reload()
+            button_frame = CTkFrame(master=container_frame)
+            button_frame.pack(pady=20, padx=10)
+
+            # "Add More" button
+            add_more_button = CTkButton(
+                master=button_frame, text="Add More", font=("Arial", 16, "bold"), fg_color="#1A936F",
+                text_color="#FFF", width=200, height=40, command=lambda: self.show_page("Pizzas")
             )
-            place_order_button.pack(pady=20)
+            add_more_button.pack(side="left", padx=(0, 10))  # Adjust padding for spacing
+
+            # "Place Order" button
+            place_order_button = CTkButton(
+                master=button_frame, text="Place Order", font=("Arial", 16, "bold"), fg_color="#1A936F",
+                text_color="#FFF", width=200, height=40, command=lambda: self.place_order_and_reload()
+            )
+            place_order_button.pack(side="left", padx=(10, 0))  # Adjust padding for spacing
 
         else:
             # If there are no pizzas in the current order

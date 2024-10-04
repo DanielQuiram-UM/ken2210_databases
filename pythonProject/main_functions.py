@@ -453,6 +453,17 @@ def calculate_pizza_price(pizza):
     # and sums all these costs
     return sum(ingredient.ingredient_cost for ingredient in pizza.ingredients) * decimal.Decimal(1.49)
 
+def get_dietary_status(pizza):
+
+    dietary_status = "vegan"
+
+    # Iterate through each ingredient to adjust the status
+    for ingredient in pizza.ingredients:
+        if ingredient.dietary_status == "non-vegetarian":
+            return "non-vegetarian"
+        elif ingredient.dietary_status == "vegetarian":
+            dietary_status = "vegetarian"
+    return dietary_status
 
 # TODO: Method to calculate the price of an entire order
 
