@@ -5,6 +5,7 @@ import customtkinter as ctk
 from PIL import Image
 from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkImage
 
+from pythonProject.config import DELIVERY_TIME_IN_MINUTES, ORDER_COMPLETION_TIME
 from pythonProject.currentOrder import CurrentOrder
 from pythonProject.currentCustomer import CurrentCustomer
 from pythonProject.database import session
@@ -411,11 +412,10 @@ class MainFrame(ctk.CTkFrame):
         for order in orders:
             # Check the time difference between now and the order initiation time
             time_since_order = datetime.now() - order.order_timestamp
+            minutes_since_order = time_since_order.total_seconds() / 60
 
-            # Update order status if more than five minutes have passed and status is still "Placed"
-            if order.order_status == "placed" and time_since_order > timedelta(minutes=5):
-                order.order_status = "in process"
-                session.commit()  # Save changes to the database
+            # adding one minute to make it more realistic
+            remaining_minutes = ORDER_COMPLETION_TIME - minutes_since_order + 1
 
             # Create a frame for each order
             order_frame = CTkFrame(master=scrollable_frame, fg_color="#eaeaea", height=140, corner_radius=8)
@@ -426,6 +426,10 @@ class MainFrame(ctk.CTkFrame):
                      font=("Arial", 16, "bold"), text_color="#2A8C55").pack(pady=(10, 5), anchor="w", padx=(20, 0))
             CTkLabel(master=order_frame, text=f"Status: {order.order_status}", font=("Arial", 14),
                      text_color="#555").pack(pady=(0, 10), anchor="w", padx=(20, 0))
+            if(order.order_status != "completed"):
+                CTkLabel(master=order_frame,
+                         text=f"Estimated Delivery Time: ~{int(remaining_minutes)} minutes remaining",
+                         font=("Arial", 14), text_color="#555").pack(pady=(0, 15), anchor="w", padx=(20, 0))
 
             # Create a sub-frame for listing all pizzas in the order
             pizza_list_frame = CTkFrame(master=order_frame, fg_color="#f5f5f5", height=60, corner_radius=8)
@@ -574,10 +578,10 @@ class MainFrame(ctk.CTkFrame):
             CTkLabel(master=scrollable_frame, text="No orders to be delivered at the moment.", font=("Arial", 16),
                      text_color="#555").pack(pady=20)
 
-        # Query for active deliveries (orders with status 'being delivered') initiated within the last 30 minutes
-        thirty_minutes_ago = datetime.now() - timedelta(minutes=30)
-        #thirty_minutes_ago = datetime.now() - timedelta(minutes=2)
-        deliveries = session.query(Delivery).filter(Delivery.initiation_time >= thirty_minutes_ago).all()
+        # Query for active deliveries (orders with status 'being delivered') initiated within the last X minutes
+        delivery_completion_time = datetime.now() - timedelta(minutes=DELIVERY_TIME_IN_MINUTES)
+
+        deliveries = session.query(Delivery).filter(Delivery.initiation_time >= delivery_completion_time).all()
 
         if deliveries:
             CTkLabel(master=scrollable_frame, text="Active Deliveries:", font=("Arial", 18, "bold"),
@@ -671,8 +675,7 @@ class MainFrame(ctk.CTkFrame):
                     minutes_since_delivery = time_since_delivery.total_seconds() // 60
 
                     # Calculate remaining time for the delivery (30 minutes total)
-                    remaining_time = 30 - minutes_since_delivery
-                    #remaining_time = 2 - minutes_since_delivery
+                    remaining_time = DELIVERY_TIME_IN_MINUTES - minutes_since_delivery
 
                     if remaining_time > 0:
                         # Display remaining time

@@ -2,8 +2,11 @@
     Main logic for interacting with the database
 """
 import decimal
+import random
 from datetime import datetime, timedelta
 import bcrypt
+
+from pythonProject.config import ORDER_CANCELLATION_TIMEFRAME, DELIVERY_TIME_IN_MINUTES
 from pythonProject.currentCustomer import CurrentCustomer
 from pythonProject.currentOrder import CurrentOrder
 from pythonProject.models import Pizza, Ingredient, ExtraItem, Customer, Order, Delivery, Deliverer, PizzaOrder, \
@@ -283,8 +286,7 @@ def assign_deliverer(postal_code, session):
 def process_orders(session):
     now = datetime.now()
     print("Checking for 'placed orders")
-    placed_orders = session.query(Order).filter_by(order_status='placed').filter(Order.order_timestamp <= now - timedelta(minutes=5)).all()
-    #placed_orders = session.query(Order).filter_by(order_status='placed').all()
+    placed_orders = session.query(Order).filter_by(order_status='placed').filter(Order.order_timestamp <= now - timedelta(minutes=ORDER_CANCELLATION_TIMEFRAME)).all()
     for order in placed_orders:
         order.order_status = 'in process'
         session.commit()
@@ -313,7 +315,9 @@ def deliver_orders(session):
         deliverer = assign_deliverer(postal_code, session)
         if deliverer is None:
             print(f"No available deliverer for postal code {postal_code}.")
-            continue
+            print(f"Employing another guy")
+            employ_another_guy(session)
+            return
 
         new_delivery = Delivery(
             deliverer_id=deliverer.deliverer_id,
@@ -332,8 +336,8 @@ def deliver_orders(session):
 def monitor_deliveries(session):
     print("Checking for completed deliveries...")
     now = datetime.now()
-    completed_deliveries = session.query(Delivery).filter(Delivery.initiation_time <= now - timedelta(minutes=30)).all()
-    #completed_deliveries = session.query(Delivery).filter(Delivery.initiation_time <= now - timedelta(minutes=2)).all()
+    completed_deliveries = session.query(Delivery)\
+        .filter(Delivery.initiation_time <= now - timedelta(minutes=DELIVERY_TIME_IN_MINUTES)).all()
 
     if not completed_deliveries:
         print("No deliveries to complete.")
@@ -351,6 +355,38 @@ def monitor_deliveries(session):
         session.commit()
 
         print(f"Marked delivery {delivery.delivery_id} as completed and set {len(orders)} order(s) to 'completed' status. Delivery instance deleted.")
+
+def employ_another_guy(session):
+    """Employ another deliverer with a unique name not already in the database."""
+    first_names = ["Chris", "Sam", "Alex", "Jordan", "Taylor", "Casey", "Jamie", "Robin", "Morgan", "Charlie"]
+    last_names = ["Pepperoni", "Mozzarella", "Gorgonzola", "Olive", "Pesto", "Basilico", "Alfredo", "Parmesan",
+                  "Garlic", "Margherita"]
+
+    # Get existing deliverers from the database
+    existing_deliverers = session.query(Deliverer).all()
+    existing_names = {(deliverer.deliverer_first_name, deliverer.deliverer_last_name) for deliverer in
+                      existing_deliverers}
+
+    # Attempt to find a new unique name
+    attempts = 0
+    max_attempts = 100
+    while attempts < max_attempts:
+        # Generate a random name
+        first_name = random.choice(first_names)
+        last_name = random.choice(last_names)
+        full_name = (first_name, last_name)
+
+        # Check if this name is unique
+        if full_name not in existing_names:
+            # Add the new deliverer to the database
+            new_deliverer = {"deliverer_first_name": first_name, "deliverer_last_name": last_name}
+            get_or_create_deliverer(new_deliverer)
+            print(f"New deliverer employed: {first_name} {last_name}")
+            return  # Exit the function once a unique name is found and added
+        attempts += 1
+
+    # If no unique name was found after the maximum attempts
+    print("Could not find a unique name for a new deliverer.")
 
 def get_order(order_id):
     existing_order = session.query(Order).filter_by(order_id=order_id).first()
