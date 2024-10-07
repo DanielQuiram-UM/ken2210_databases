@@ -3,14 +3,15 @@ from tkinter import Image, TclError
 
 import customtkinter as ctk
 from PIL import Image
-from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkImage
+from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkImage, CTkComboBox, CTkEntry
 
 from pythonProject.config import DELIVERY_TIME_IN_MINUTES, ORDER_COMPLETION_TIME
 from pythonProject.currentOrder import CurrentOrder
 from pythonProject.currentCustomer import CurrentCustomer
 from pythonProject.database import session
 from pythonProject.main_functions import calculate_pizza_price, add_pizza_to_current_order, place_current_order, \
-    remove_pizza_from_current_order, create_new_order, cancel_order, get_customer_from_order, get_dietary_status
+    remove_pizza_from_current_order, create_new_order, cancel_order, get_customer_from_order, get_dietary_status, \
+    calculate_earnings
 from pythonProject.models import Pizza, Ingredient, Order, Deliverer, Delivery, ExtraItem
 
 
@@ -695,7 +696,87 @@ class MainFrame(ctk.CTkFrame):
                                  font=("Arial", 16), text_color="#2A8C55").pack(side="right", anchor="e")
 
     def create_earnings_page(self):
-        pass
+        """Create the Earnings page view."""
+        # Clear existing widgets in the main view
+        for widget in self.main_view.winfo_children():
+            widget.destroy()
+
+        # Create a title label for the Earnings page
+        CTkLabel(master=self.main_view, text="Earnings Report", font=("Arial Black", 25), text_color="#2A8C55").pack(
+            pady=20)
+
+        # Create a frame for the form and the results
+        form_frame = CTkFrame(master=self.main_view)
+        form_frame.pack(pady=10, padx=20, fill="both", expand=True)
+
+        # Filters: Month, Region, Gender, Age
+        CTkLabel(master=form_frame, text="Filter Criteria (Optional)", font=("Arial", 18, "bold")).pack(pady=10)
+
+        # Month Dropdown
+        CTkLabel(master=form_frame, text="Month:", font=("Arial", 14)).pack(anchor="w", padx=(20, 0))
+        month_entry = CTkComboBox(
+            master=form_frame,
+            values=[
+                "January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
+                "November", "December"
+            ]
+        )
+        month_entry.pack(pady=5, padx=(20, 0))
+
+        # Region Entry (Postal Code or City)
+        CTkLabel(master=form_frame, text="Region (Postal Code or City):", font=("Arial", 14)).pack(anchor="w",
+                                                                                                   padx=(20, 0))
+        region_entry = CTkEntry(master=form_frame, placeholder_text="Enter Postal Code or City")
+        region_entry.pack(pady=5, padx=(20, 0))
+
+        # Customer Gender Dropdown
+        CTkLabel(master=form_frame, text="Customer Gender:", font=("Arial", 14)).pack(anchor="w", padx=(20, 0))
+        gender_entry = CTkComboBox(master=form_frame, values=["Male", "Female", "Other"])
+        gender_entry.pack(pady=5, padx=(20, 0))
+
+        # Customer Age Entry
+        CTkLabel(master=form_frame, text="Customer Age (e.g., 18-25):", font=("Arial", 14)).pack(anchor="w",
+                                                                                                 padx=(20, 0))
+        age_entry = CTkEntry(master=form_frame, placeholder_text="Enter Age Range (e.g., 18-25)")
+        age_entry.pack(pady=5, padx=(20, 0))
+
+        # Proceed Button
+        proceed_button = CTkButton(
+            master=form_frame, text="Proceed", font=("Arial", 16, "bold"), fg_color="#2A8C55", text_color="#FFF",
+            width=150,
+            command=lambda: self.show_earnings_report(
+                form_frame,
+                month_entry.get() if month_entry.get() else None,
+                region_entry.get() if region_entry.get() else None,
+                gender_entry.get() if gender_entry.get() else None,
+                age_entry.get() if age_entry.get() else None
+            )
+        )
+        proceed_button.pack(pady=20)
+
+    def show_earnings_report(self, form_frame, month, region, gender, age):
+        """Display the earnings report after applying the filter criteria and calculating earnings."""
+        # Clear the form frame for displaying the report
+        for widget in form_frame.winfo_children():
+            widget.destroy()
+
+        # Calculate the total earnings and order count using the selected filters
+        total_earnings, order_count = calculate_earnings(month, region, gender, age)
+
+        # Create labels to show the earnings report
+        CTkLabel(master=form_frame, text="Earnings Report for Selected Criteria", font=("Arial", 18, "bold")).pack(
+            pady=20)
+        CTkLabel(master=form_frame, text=f"Total Earnings: €{total_earnings:,.2f}", font=("Arial", 16),
+                 text_color="#2A8C55").pack(pady=10)
+        CTkLabel(master=form_frame, text=f"Total Orders: {order_count}", font=("Arial", 16), text_color="#2A8C55").pack(
+            pady=10)
+
+        # Create a "Go Back" button to return to the filters
+        go_back_button = CTkButton(
+            master=form_frame, text="Go Back", font=("Arial", 16, "bold"), fg_color="#A61B1B",
+            text_color="#FFF", width=150, command=lambda: self.create_earnings_page()
+        )
+        go_back_button.pack(pady=20)
 
     def logout(self):
         self.parent.show_frame("LoginFrame")

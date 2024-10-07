@@ -465,7 +465,82 @@ def get_dietary_status(pizza):
             dietary_status = "vegetarian"
     return dietary_status
 
+# TODO: Method to calculate the earnings
+
+def calculate_earnings(selected_month, selected_region, selected_gender, selected_age):
+    """Calculate the total earnings and count the orders based on the filter criteria."""
+    from datetime import datetime
+    from sqlalchemy import func
+
+    # Base query to filter orders and calculate earnings
+    query = session.query(Order).join(Customer, Order.customer_id == Customer.customer_id).join(
+        Customer_Address, Customer.customer_id == Customer_Address.customer_id)
+
+    # Apply filters if specified
+    if selected_month:
+        month_index = datetime.strptime(selected_month, "%B").month  # Convert month name to index (1-12)
+        query = query.filter(func.extract('month', Order.order_timestamp) == month_index)
+
+    if selected_region:
+        query = query.filter(
+            (Customer_Address.postal_code.ilike(f"%{selected_region}%")) |
+            (Customer_Address.city.ilike(f"%{selected_region}%"))
+        )
+
+    if selected_gender:
+        query = query.filter(Customer.gender == selected_gender)
+
+    if selected_age:
+        try:
+            # Extract lower and upper age bounds
+            lower_age, upper_age = map(int, selected_age.split('-'))
+            # Calculate birthdate range based on current date
+            current_year = datetime.now().year
+            birth_year_start = current_year - upper_age
+            birth_year_end = current_year - lower_age
+            query = query.filter(
+                func.extract('year', Customer.date_of_birth).between(birth_year_start, birth_year_end))
+        except ValueError:
+            print("Invalid age range format provided.")
+
+    # Execute the query to get the filtered orders
+    filtered_orders = query.all()
+
+    # Calculate total earnings and the number of orders
+    total_earnings = 0
+    order_count = len(filtered_orders)
+    for order in filtered_orders:
+        total_earnings += calculate_order_price(order)
+
+    return total_earnings, order_count
+
 # TODO: Method to calculate the price of an entire order
+
+# Function to calculate the total price of an entire order
+def calculate_order_price(order):
+    """Calculate the total price of a given order."""
+    total_price = 0
+
+    # Calculate the total price for each pizza in the order
+    pizzas_in_order = session.query(PizzaOrder).filter_by(order_id=order.order_id).all()
+    for pizza_order in pizzas_in_order:
+        # Get the pizza details from the Pizza table
+        pizza = session.query(Pizza).filter_by(pizza_id=pizza_order.pizza_id).first()
+        if pizza:
+            # Calculate the cost of this specific pizza and multiply by the quantity
+            pizza_price = calculate_pizza_price(pizza)
+            total_price += pizza_price * pizza_order.pizza_amount
+
+    # Calculate the total price for each extra item in the order
+    extra_items_in_order = session.query(ExtraItemOrder).filter_by(order_id=order.order_id).all()
+    for extra_item_order in extra_items_in_order:
+        # Get the extra item details from the ExtraItem table
+        extra_item = session.query(ExtraItem).filter_by(item_id=extra_item_order.item_id).first()
+        if extra_item:
+            # Add the cost of the extra item multiplied by its quantity
+            total_price += extra_item.cost * extra_item_order.item_amount
+
+    return total_price
 
 
 # TODO: Method to calculate when someone has a right to the 10% discount (so after 10 pizzas ordered)
