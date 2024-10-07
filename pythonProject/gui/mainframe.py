@@ -3,7 +3,7 @@ from tkinter import Image, TclError
 
 import customtkinter as ctk
 from PIL import Image
-from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkImage, CTkComboBox, CTkEntry
+from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkImage, CTkComboBox, CTkEntry, CTkProgressBar
 
 from pythonProject.config import DELIVERY_TIME_IN_MINUTES, ORDER_COMPLETION_TIME
 from pythonProject.currentOrder import CurrentOrder
@@ -11,7 +11,8 @@ from pythonProject.currentCustomer import CurrentCustomer
 from pythonProject.database import session
 from pythonProject.main_functions import calculate_pizza_price, add_pizza_to_current_order, place_current_order, \
     remove_pizza_from_current_order, create_new_order, cancel_order, get_customer_from_order, get_dietary_status, \
-    calculate_earnings, apply_discount_code, apply_birthday_discount, calculate_order_price
+    calculate_earnings, apply_discount_code, apply_birthday_discount, calculate_order_price, apply_pizza_discount, \
+    remove_discount
 from pythonProject.models import Pizza, Ingredient, Order, Deliverer, Delivery, ExtraItem
 
 
@@ -254,9 +255,28 @@ class MainFrame(ctk.CTkFrame):
             CTkLabel(master=self.main_view, text=f"Gender: {current_customer.gender}", font=("Arial", 15)).pack(pady=5)
             CTkLabel(master=self.main_view, text=f"Date of Birth: {current_customer.date_of_birth}",
                      font=("Arial", 15)).pack(pady=5)
-            CTkLabel(master=self.main_view,
-                     text=f"Discount Available: {'Yes' if current_customer.discount_available else 'No'}",
-                     font=("Arial", 15)).pack(pady=5)
+
+            # Display pizza count progress bar
+            pizza_count = current_customer.pizza_count  # Get the amount of pizzas the customer has purchased
+            pizzas_needed_for_discount = 10  # Total pizzas required for a discount
+            remaining_pizzas = pizzas_needed_for_discount - pizza_count  # Pizzas remaining until next discount
+
+            # Create a customtkinter progress bar
+            pizza_progress_bar = CTkProgressBar(master=self.main_view, width=300, height=20)
+            pizza_progress_bar.pack(pady=10)
+
+            # Set the progress value dynamically based on pizza_count (value should be between 0 and 1)
+            progress_value = min(pizza_count / pizzas_needed_for_discount, 1.0)
+            pizza_progress_bar.set(progress_value)
+
+            # Show a message if the discount is available for the next order
+            if pizza_count >= pizzas_needed_for_discount:
+                CTkLabel(master=self.main_view, text="Congratulations! You qualify for a discount on your next order.",
+                         font=("Arial", 15), text_color="#2A8C55").pack(pady=10)
+            else:
+                CTkLabel(master=self.main_view,
+                         text=f"{remaining_pizzas} more pizza(s) to get a discount on your next order!",
+                         font=("Arial", 14), text_color="#2A8C55").pack(pady=10)
         else:
             # No customer set, show a placeholder message
             CTkLabel(master=self.main_view, text="No customer information available.", font=("Arial", 15)).pack(pady=10)
@@ -272,6 +292,7 @@ class MainFrame(ctk.CTkFrame):
 
         # Access the current order from the CurrentOrder singleton
         current_order = CurrentOrder().order
+        current_customer = CurrentCustomer().customer
 
         # Create a container frame for the scrollable area and the button
         container_frame = CTkFrame(master=self.main_view)
@@ -287,6 +308,7 @@ class MainFrame(ctk.CTkFrame):
             # Set the maximum height dynamically based on the container frame's height
             self.update_scrollable_frame_height(scrollable_frame)
 
+            #remove_discount()
             # Loop through each pizza in the current order
             for pizza_order in current_order.pizza_orders:
                 pizza = session.query(Pizza).filter_by(pizza_id=pizza_order.pizza_id).first()  # Fetch the Pizza object
@@ -345,14 +367,17 @@ class MainFrame(ctk.CTkFrame):
 
             apply_birthday_discount()
 
-            print(current_order.discount_applied)
             # Create a discount sub-frame
             discount_frame = CTkFrame(master=container_frame, fg_color="#eaeaea", corner_radius=8)
             discount_frame.pack(pady=10, padx=10, fill="x")
 
             # Display discount information or text field for discount code
-            if current_order.discount_applied:
-                CTkLabel(master=discount_frame, text="10% Discount Applied.", font=("Arial", 16),
+            if current_customer.pizza_count >= 10:
+                apply_pizza_discount()
+                CTkLabel(master=discount_frame, text="10 Pizzas - 10% Discount Applied.", font=("Arial", 16),
+                         text_color="#2A8C55").pack(pady=10)
+            elif current_order.discount_applied:
+                CTkLabel(master=discount_frame, text="Discount Code - 10% Discount Applied.", font=("Arial", 16),
                          text_color="#2A8C55").pack(pady=10)
             else:
                 # Create a label for applying discount
@@ -463,7 +488,7 @@ class MainFrame(ctk.CTkFrame):
             minutes_since_order = time_since_order.total_seconds() / 60
 
             # adding one minute to make it more realistic
-            remaining_minutes = ORDER_COMPLETION_TIME - minutes_since_order + 1
+            remaining_minutes = max(ORDER_COMPLETION_TIME - minutes_since_order + 1,0)
 
             # Create a frame for each order
             order_frame = CTkFrame(master=scrollable_frame, fg_color="#eaeaea", height=140, corner_radius=8)
@@ -474,6 +499,12 @@ class MainFrame(ctk.CTkFrame):
                      font=("Arial", 16, "bold"), text_color="#2A8C55").pack(pady=(10, 5), anchor="w", padx=(20, 0))
             CTkLabel(master=order_frame, text=f"Status: {order.order_status}", font=("Arial", 14),
                      text_color="#555").pack(pady=(0, 10), anchor="w", padx=(20, 0))
+            if order.discount_applied:
+                CTkLabel(master=order_frame, text="10% Discount on the entire order", font=("Arial", 14),
+                         text_color="#555").pack(pady=(0, 15), anchor="w", padx=(20, 0))
+            if order.free_birthday_products:
+                CTkLabel(master=order_frame, text="Free Birthday Pizza and Drink", font=("Arial", 14),
+                         text_color="#555").pack(pady=(0, 20), anchor="w", padx=(20, 0))
             if(order.order_status != "completed"):
                 CTkLabel(master=order_frame,
                          text=f"Estimated Delivery Time: ~{int(remaining_minutes)} minutes remaining",

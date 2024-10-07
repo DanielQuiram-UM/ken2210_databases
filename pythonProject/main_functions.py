@@ -160,12 +160,17 @@ def get_or_create_discount_code(discount_code_string):
 # Method to place the current order instance
 def place_current_order():
     current_order = CurrentOrder().order
+    current_customer = CurrentCustomer().customer
     if current_order is None:
         print("Could not find the current order to be placed")
     else:
         CurrentOrder().update_status("placed")
         CurrentOrder().update_timestamp()
 
+    if current_customer and current_customer.pizza_count >= 10:
+        current_customer.pizza_count -= 10
+
+    session.commit()
 # Method to find the customer that belongs to the current order
 def get_customer_from_order(order):
     return session.query(Customer).filter(Customer.customer_id == order.customer_id).first()
@@ -382,6 +387,17 @@ def monitor_deliveries(session):
         for order in orders:
             order.order_status = 'completed'
 
+            # Retrieve the customer associated with this order
+            customer = session.query(Customer).filter_by(customer_id=order.customer_id).first()
+
+            if customer:
+                # Calculate the total amount of pizzas in this order
+                pizza_count_in_order = get_pizza_amount_in_order(order)
+
+                # Increment the customer's pizza count
+                customer.pizza_count += pizza_count_in_order
+                session.commit()
+
         delivery.deliverer.postal_code = None
         session.commit()
 
@@ -574,7 +590,34 @@ def calculate_order_price(order):
 
     return total_price
 
+# Method to get the total amount of pizzas in an order
+def get_pizza_amount_in_order(order):
+    pizza_orders = session.query(PizzaOrder).filter_by(order_id=order.order_id).all()
 
+    # Sum up the quantity of each pizza in the order
+    total_pizzas = sum(pizza_order.pizza_amount for pizza_order in pizza_orders)
+
+    return total_pizzas
+
+def remove_discount():
+    current_order_singleton = CurrentOrder()
+    current_order = current_order_singleton.order
+
+    if not current_order:
+        return
+    current_order.discount_applied = False
+    session.commit()
+# Method to apply a discount without a discount code
+def apply_pizza_discount():
+    current_order_singleton = CurrentOrder()
+    current_order = current_order_singleton.order
+
+    if not current_order:
+        return
+    current_order.discount_applied = True
+    session.commit()
+
+# Method to apply a discount by providing a valid discount code
 def apply_discount_code(discount_code_entry):
     discount_code = session.query(DiscountCode).filter_by(discount_string=discount_code_entry).first()
     if discount_code:
