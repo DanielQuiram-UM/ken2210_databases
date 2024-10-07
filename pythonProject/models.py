@@ -87,6 +87,7 @@ class Customer(Base):
     date_of_birth = Column(Date, nullable=False)
     phone_number = Column(String(50), nullable=False)
     discount_available = Column(Boolean, default=False)
+    pizza_count = Column(Integer, default=0)
     password = Column(String(100), nullable=False)
 
     # Establish a one-to-one relationship with Customer_Address
@@ -112,8 +113,9 @@ class Order(Base):
     order_id = Column(Integer, primary_key=True)
     customer_id = Column(Integer, ForeignKey('customers.customer_id'), nullable=False)
     delivery_id = Column(Integer, ForeignKey('deliveries.delivery_id'), nullable=True)
-    order_timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
+    order_timestamp = Column(DateTime, default=datetime.now, nullable=False)
     discount_applied = Column(Boolean, default=False)
+    free_birthday_products = Column(Boolean, default=False)
     order_status = Column(String(50), nullable=False)
 
     # Defining the one-to-many relationship with the customer & delivery class
@@ -129,7 +131,7 @@ class Delivery(Base):
     __tablename__ = 'deliveries'
     delivery_id = Column(Integer, primary_key=True)
     deliverer_id = Column(Integer, ForeignKey('deliverers.deliverer_id'), nullable=False)
-    initiation_time = Column(DateTime, default=datetime.utcnow, nullable=False)
+    initiation_time = Column(DateTime, default=datetime.now, nullable=False)
 
 #Define the relationship with the Deliverer class
     deliverer = relationship('Deliverer', backref='deliveries')

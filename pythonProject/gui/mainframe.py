@@ -11,7 +11,7 @@ from pythonProject.currentCustomer import CurrentCustomer
 from pythonProject.database import session
 from pythonProject.main_functions import calculate_pizza_price, add_pizza_to_current_order, place_current_order, \
     remove_pizza_from_current_order, create_new_order, cancel_order, get_customer_from_order, get_dietary_status, \
-    calculate_earnings
+    calculate_earnings, apply_discount_code, apply_birthday_discount, calculate_order_price
 from pythonProject.models import Pizza, Ingredient, Order, Deliverer, Delivery, ExtraItem
 
 
@@ -277,6 +277,7 @@ class MainFrame(ctk.CTkFrame):
         container_frame = CTkFrame(master=self.main_view)
         container_frame.pack(pady=10, padx=10, fill="both", expand=True)
 
+        # Display the order summary for pizzas
         if current_order and current_order.pizza_orders:  # Assuming pizza_orders is a relationship attribute in Order
 
             # Create a scrollable frame for displaying ordered pizzas
@@ -342,8 +343,44 @@ class MainFrame(ctk.CTkFrame):
                     )
                     increase_button.pack(side="left", padx=(5, 0))
 
+            apply_birthday_discount()
+
+            print(current_order.discount_applied)
+            # Create a discount sub-frame
+            discount_frame = CTkFrame(master=container_frame, fg_color="#eaeaea", corner_radius=8)
+            discount_frame.pack(pady=10, padx=10, fill="x")
+
+            # Display discount information or text field for discount code
+            if current_order.discount_applied:
+                CTkLabel(master=discount_frame, text="10% Discount Applied.", font=("Arial", 16),
+                         text_color="#2A8C55").pack(pady=10)
+            else:
+                # Create a label for applying discount
+                CTkLabel(master=discount_frame, text="Enter Discount Code:", font=("Arial", 16),
+                         text_color="#2A8C55").pack(pady=5)
+
+                # Create a text field for discount code input
+                discount_code_entry = CTkEntry(master=discount_frame, placeholder_text="Discount Code", width=200,
+                                               font=("Arial", 14))
+                discount_code_entry.pack(pady=5)
+
+                # Create a button to apply the discount code
+                apply_discount_button = CTkButton(
+                    master=discount_frame,
+                    text="Apply Discount Code",
+                    font=("Arial", 16, "bold"),
+                    fg_color="#1A936F",
+                    text_color="#FFF",
+                    command=lambda: self.apply_discount_code(discount_code_entry.get())  # Placeholder method
+                )
+                apply_discount_button.pack(pady=10)
+
             button_frame = CTkFrame(master=container_frame)
             button_frame.pack(pady=20, padx=10)
+
+            if current_order.free_birthday_products:
+                CTkLabel(master=discount_frame, text="Birthday Offer: Get cheapest pizza and drink for free", font=("Arial", 16),
+                         text_color="#2A8C55").pack(pady=10)
 
             # "Add More" button
             add_more_button = CTkButton(
@@ -363,6 +400,10 @@ class MainFrame(ctk.CTkFrame):
             # If there are no pizzas in the current order
             CTkLabel(master=container_frame, text="Add items to place your order.", font=("Arial", 14),
                      text_color="#555").pack(pady=20)
+
+    def apply_discount_code(self,discount_code_entry):
+        apply_discount_code(discount_code_entry)
+        self.show_page("Current Order")
 
     def update_scrollable_frame_height(self, scrollable_frame):
         """Update the height of the scrollable frame based on the container frame's height."""
@@ -455,9 +496,7 @@ class MainFrame(ctk.CTkFrame):
                     pizza_details_label.pack(anchor="w", pady=(2, 2), padx=(10, 0))
 
             # Calculate the total price of the order
-            total_price = sum(calculate_pizza_price(
-                session.query(Pizza).filter_by(pizza_id=pizza_order.pizza_id).first()) * pizza_order.pizza_amount for
-                              pizza_order in order.pizza_orders)
+            total_price = calculate_order_price(order)
 
             # Display the total price for the order at the bottom of the order frame
             CTkLabel(master=order_frame, text=f"Total Price: {total_price:.2f}€", font=("Arial", 16, "bold"),

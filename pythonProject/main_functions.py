@@ -10,7 +10,7 @@ from pythonProject.config import ORDER_CANCELLATION_TIMEFRAME, DELIVERY_TIME_IN_
 from pythonProject.currentCustomer import CurrentCustomer
 from pythonProject.currentOrder import CurrentOrder
 from pythonProject.models import Pizza, Ingredient, ExtraItem, Customer, Order, Delivery, Deliverer, PizzaOrder, \
-    ExtraItemOrder, Customer_Address
+    ExtraItemOrder, Customer_Address, DiscountCode
 from pythonProject.database import session
 
 ''' FOOD FUNCTIONS'''
@@ -147,6 +147,13 @@ def get_or_create_deliverer(deliverer):
         session.commit()
         return new_deliverer
 
+def get_or_create_discount_code(discount_code_string):
+    new_discount_code = DiscountCode(
+        discount_string=discount_code_string
+    )
+    session.add(new_discount_code)
+    session.commit()
+    return  new_discount_code
 
 ''' PLACING & PROCESSING THE ORDER FUNCTIONS'''
 
@@ -516,31 +523,94 @@ def calculate_earnings(selected_month, selected_region, selected_gender, selecte
 
 # TODO: Method to calculate the price of an entire order
 
-# Function to calculate the total price of an entire order
 def calculate_order_price(order):
     """Calculate the total price of a given order."""
-    total_price = 0
+    total_price = 0.00  # Initialize total price as a float
 
     # Calculate the total price for each pizza in the order
     pizzas_in_order = session.query(PizzaOrder).filter_by(order_id=order.order_id).all()
+    cheapest_pizza_price = 0
+    cheapest_extra_item_price = 0
+
+    # Calculate the total price for each pizza in the order
     for pizza_order in pizzas_in_order:
         # Get the pizza details from the Pizza table
         pizza = session.query(Pizza).filter_by(pizza_id=pizza_order.pizza_id).first()
         if pizza:
             # Calculate the cost of this specific pizza and multiply by the quantity
-            pizza_price = calculate_pizza_price(pizza)
-            total_price += pizza_price * pizza_order.pizza_amount
+            pizza_price = float(calculate_pizza_price(pizza))  # Ensure this is a float
+            total_price += float(pizza_price * pizza_order.pizza_amount)  # Convert pizza_order.pizza_amount to float
+
+            print(total_price)
+            # Check if this pizza is the cheapest one
+            if cheapest_pizza_price == 0 or pizza_price < cheapest_pizza_price:
+                cheapest_pizza_price = pizza_price
 
     # Calculate the total price for each extra item in the order
     extra_items_in_order = session.query(ExtraItemOrder).filter_by(order_id=order.order_id).all()
+
     for extra_item_order in extra_items_in_order:
         # Get the extra item details from the ExtraItem table
         extra_item = session.query(ExtraItem).filter_by(item_id=extra_item_order.item_id).first()
         if extra_item:
             # Add the cost of the extra item multiplied by its quantity
-            total_price += extra_item.cost * extra_item_order.item_amount
+            total_price += float(extra_item.cost * extra_item_order.item_amount)  # Ensure this is a float
+
+            # Check if this extra item is the cheapest one
+            if cheapest_extra_item_price == 0 or float(extra_item.cost) < cheapest_extra_item_price:
+                cheapest_extra_item_price = float(extra_item.cost)
+
+    # Apply discount if applicable
+    if order.discount_applied:
+        total_price *= 0.90  # Apply a 10% discount
+
+    # Exclude cheapest pizza and extra item if birthday products are free
+    if order.free_birthday_products:
+        total_price -= cheapest_pizza_price  # Exclude cheapest pizza
+        total_price -= cheapest_extra_item_price  # Exclude cheapest extra item
+
+    # Ensure the total price does not go below zero
+    total_price = max(total_price, 0.0)
 
     return total_price
+
+
+def apply_discount_code(discount_code_entry):
+    discount_code = session.query(DiscountCode).filter_by(discount_string=discount_code_entry).first()
+    if discount_code:
+        current_order_singleton = CurrentOrder()
+        current_order = current_order_singleton.order
+
+        if not current_order:
+            return
+        current_order.discount_applied = True
+        session.commit()
+
+def apply_birthday_discount():
+    """Apply a birthday discount to the current order if today is the customer's birthday."""
+    # Get the current customer instance
+    current_customer_singleton = CurrentCustomer()
+    current_customer = current_customer_singleton.customer
+
+    if current_customer:
+        # Get the current date
+        today = datetime.now().date()
+        # Extract the date of birth of the current customer
+        date_of_birth = current_customer.date_of_birth
+
+        # Check if today matches the customer's birthday (ignoring the year)
+        if today.month == date_of_birth.month and today.day == date_of_birth.day:
+            # Access the current order instance
+            current_order_singleton = CurrentOrder()
+            current_order = current_order_singleton.order
+
+            if current_order:
+                # Apply the birthday discount
+                current_order.free_birthday_products = True
+
+                # Commit the changes to the database
+                session.commit()
+
 
 
 # TODO: Method to calculate when someone has a right to the 10% discount (so after 10 pizzas ordered)
