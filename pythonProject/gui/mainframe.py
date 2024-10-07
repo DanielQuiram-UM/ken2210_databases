@@ -717,7 +717,7 @@ class MainFrame(ctk.CTkFrame):
         month_entry = CTkComboBox(
             master=form_frame,
             values=[
-                "January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
+                "All Time", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
                 "November", "December"
             ]
         )
@@ -731,7 +731,7 @@ class MainFrame(ctk.CTkFrame):
 
         # Customer Gender Dropdown
         CTkLabel(master=form_frame, text="Customer Gender:", font=("Arial", 14)).pack(anchor="w", padx=(20, 0))
-        gender_entry = CTkComboBox(master=form_frame, values=["Male", "Female", "Other"])
+        gender_entry = CTkComboBox(master=form_frame, values=["All", "Male", "Female", "Other"])
         gender_entry.pack(pady=5, padx=(20, 0))
 
         # Customer Age Entry
@@ -759,6 +759,11 @@ class MainFrame(ctk.CTkFrame):
         # Clear the form frame for displaying the report
         for widget in form_frame.winfo_children():
             widget.destroy()
+
+        # Display the applied filters at the top of the report
+        applied_filters = f"Filters Applied: Month = {month or 'All'}, Region = {region or 'All'}, Gender = {gender or 'All'}, Age Range = {age or 'All'}"
+        CTkLabel(master=form_frame, text=applied_filters, font=("Arial", 14, "italic"), text_color="#4B4B4B").pack(
+            pady=10)
 
         # Calculate the total earnings and order count using the selected filters
         total_earnings, order_count = calculate_earnings(month, region, gender, age)

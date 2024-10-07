@@ -477,7 +477,7 @@ def calculate_earnings(selected_month, selected_region, selected_gender, selecte
         Customer_Address, Customer.customer_id == Customer_Address.customer_id)
 
     # Apply filters if specified
-    if selected_month:
+    if selected_month and selected_month != "All Time":
         month_index = datetime.strptime(selected_month, "%B").month  # Convert month name to index (1-12)
         query = query.filter(func.extract('month', Order.order_timestamp) == month_index)
 
@@ -487,7 +487,7 @@ def calculate_earnings(selected_month, selected_region, selected_gender, selecte
             (Customer_Address.city.ilike(f"%{selected_region}%"))
         )
 
-    if selected_gender:
+    if selected_gender and selected_gender != "All":
         query = query.filter(Customer.gender == selected_gender)
 
     if selected_age:

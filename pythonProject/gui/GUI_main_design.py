@@ -17,7 +17,7 @@ class Application(ctk.CTk):
         super().__init__()
 
         self.title("Pizza Delivery System")
-        self.geometry("800x600")
+        self.geometry("1080x720")
 
         # Initialize frames
         self.frames = {
