@@ -448,20 +448,6 @@ def get_order(order_id):
     else:
         return "Order not found!"
 
-# TODO: Create a new delivery
-def create_delivery():
-    pass
-
-
-# TODO: Method to add an order to a delivery
-def add_order_to_delivery(order):
-    pass
-
-
-# TODO: Method to remove an order from a delivery
-def remove_order_from_delivery(order):
-    pass
-
 # Helper function to ensure the deliverers are not added to the database multiple times.
 def find_deliverer(deliverer_id):
     existing_deliverer = session.query(Deliverer).filter_by(deliverer_id=deliverer_id).first()
@@ -491,8 +477,7 @@ def get_dietary_status(pizza):
             dietary_status = "vegetarian"
     return dietary_status
 
-# TODO: Method to calculate the earnings
-
+# Method to calculate the earnings reports based on different filters
 def calculate_earnings(selected_month, selected_region, selected_gender, selected_age):
     """Calculate the total earnings and count the orders based on the filter criteria."""
     from datetime import datetime
@@ -542,8 +527,7 @@ def calculate_earnings(selected_month, selected_region, selected_gender, selecte
 
     return total_earnings, order_count
 
-# TODO: Method to calculate the price of an entire order
-
+# Method to calculate the price of an order (taking discounts into account)
 def calculate_order_price(order):
     """Calculate the total price of a given order."""
     total_price = 0.00  # Initialize total price as a float
@@ -658,11 +642,3 @@ def apply_birthday_discount():
 
                 # Commit the changes to the database
                 session.commit()
-
-
-
-# TODO: Method to calculate when someone has a right to the 10% discount (so after 10 pizzas ordered)
-
-# TODO: Method to offer someone a free pizza + drink on their bday
-
-# TODO: Method to apply discount codes / birthday discounts / 10 pizza reward discounts

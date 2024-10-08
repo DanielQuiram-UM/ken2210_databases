@@ -90,7 +90,6 @@ class RegistrationFrame(ctk.CTkFrame):
         messagebox.showinfo("Registration", "Registration Successful!")
         self.display_login_form()
 
-    #TODO: Add Address accordingly
     def register_customer(self, first_name, last_name, email, password, gender, dob, phone, street, city, country, postal_code):
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         new_customer = Customer(

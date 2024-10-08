@@ -61,8 +61,6 @@ def populate_data():
     for pizza_name, ingredient_names in pizza_ingredient_map.items():
         match_ingredients_to_pizza(pizza_name, ingredient_names)
 
-    # Filling in the extra items table
-    #TODO: do we still need this if i create the map below?
     extra_items = [
         {"item_name": "Coca-Cola", "cost": 3.00, "dietary_status": "vegan"},
         {"item_name": "Ice Tea", "cost": 3.00, "dietary_status": "vegan"},
@@ -93,8 +91,6 @@ def populate_data():
 
     for discount_code in discount_codes:
         get_or_create_discount_code(discount_code)
-
-#TODO: CREATE EXTRA_ITEM_COST MAP
 
 if __name__ == '__main__':
     init_db()

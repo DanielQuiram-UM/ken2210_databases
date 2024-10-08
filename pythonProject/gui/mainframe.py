@@ -941,8 +941,6 @@ class MainFrame(ctk.CTkFrame):
         session.commit()  # Commit any pending transactions to the database
         self.show_page(self.current_page)
 
-#TODO: display dietary status underneath each pizza --> Daniel
-
     def create_extra_items_page(self):
         """Create the Extra Items page view."""
         # Retrieve all extra item objects from the database using the session.
@@ -968,15 +966,9 @@ class MainFrame(ctk.CTkFrame):
             # Show the total price of the extra item
             item_price = item.cost
 
-            #Show the dietary status of the extra item
-            dietary_status = item.dietary_status
-            #TODO: make sure it shows up in the GUI!
-            # Check the current amount of this extra item in the order, if it exists
-            item_amount = 0
             if current_order and current_order.extra_item_orders:
                 for extra_item_order in current_order.extra_item_orders:
                     if extra_item_order.item_id == item.item_id:
-                        item_amount = extra_item_order.item_amount
                         break
 
             # Create a frame for each pizza
@@ -1026,12 +1018,7 @@ class MainFrame(ctk.CTkFrame):
         remove_extra_item_from_current_order(item_id)
         self.show_page("Current Order")
 
-#TODO: continue shopping button after adding a pizza / extra item --> Merel
 
 #TODO: add estimated delivery time to order confirmation --> Daniel
 
-#TODO: tracking the status of the delivery
-
 #TODO: earnings page solely visible for the boss of the pizza place
-
-#TODO: monitoring: provide a real-time display for the restaurant staff, showing a list of pizzas that have been ordered but not yet dispatched for delivery --> Daniel
