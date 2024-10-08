@@ -3,7 +3,6 @@ from tkinter import messagebox
 import bcrypt
 import customtkinter as ctk
 from tkcalendar import DateEntry
-
 from pythonProject.models import Customer, Customer_Address
 from pythonProject.database import session
 from datetime import datetime
@@ -13,84 +12,102 @@ class RegistrationFrame(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
-        self.create_registration_form()
-
         self.configure(width=800, height=600)
 
-    from tkcalendar import DateEntry
+        header_frame = ctk.CTkFrame(self, fg_color="#1A936F", width=800, height=200)
+        header_frame.pack(side=tkinter.TOP, fill=tkinter.X)
 
-    def create_registration_form(self):
-        # Create a header label
-        label_header = ctk.CTkLabel(self, text="Register as new account", text_color="Blue", font=("Arial", 24))
-        label_header.grid(row=0, column=0, columnspan=2, pady=(20, 10))
+        label_header = ctk.CTkLabel(header_frame, text="Pizza Delivery System", text_color="white",
+                                    font=("Arial", 36, "bold"))
+        label_header.pack(side=tkinter.TOP, pady=50)
 
-        # Define the labels for the form
+        form_frame = ctk.CTkFrame(self, fg_color="#f5f5f5", width=600)
+        form_frame.pack(side=tkinter.TOP, pady=(20, 10), padx=20)
+        form_frame.pack_propagate(False)
+
         labels = [
             "First Name", "Last Name", "Email", "Password", "Gender",
             "Date of Birth", "Phone Number", "Street", "City", "Country", "Postal Code"
         ]
 
-        # Store entry fields in a dictionary for easy access
         self.entry_fields = {}
+        self.gender_var = ctk.StringVar(value="")
 
-        # Create labels and entry fields dynamically
         for i, label_text in enumerate(labels):
-            label = ctk.CTkLabel(self, text=label_text)
-            label.grid(row=i + 1, column=0, pady=5, sticky="w")
+            # Create and place label
+            label = ctk.CTkLabel(form_frame, text=f"{label_text} *", font=("Arial", 14))
+            label.grid(row=i, column=0, padx=10, pady=5)  # Align labels to the right
 
+            # Create and place entry fields or dropdowns
             if label_text == "Gender":
-                self.gender_var = ctk.StringVar()
-                gender_dropdown = ctk.CTkOptionMenu(self, variable=self.gender_var, values=["Male", "Female", "Other"])
-                gender_dropdown.grid(row=i + 1, column=1, padx=10, pady=5)
+                gender_dropdown = ctk.CTkOptionMenu(form_frame, variable=self.gender_var,
+                                                    values=["Male", "Female", "Other"])
+                gender_dropdown.grid(row=i, column=1, padx=10, pady=5)  # Expand dropdown
                 continue
 
             if label_text == "Date of Birth":
-                # Use DateEntry for Date of Birth
-                date_entry = DateEntry(self, date_pattern='y-mm-dd')  # You can customize the date format
-                date_entry.grid(row=i + 1, column=1, padx=10, pady=5)
+                date_entry = DateEntry(form_frame, date_pattern='y-mm-dd')
+                date_entry.grid(row=i, column=1, padx=10, pady=5)  # Expand date entry
                 self.entry_fields["date_of_birth"] = date_entry
                 continue
 
-            entry = ctk.CTkEntry(self)
+            entry = ctk.CTkEntry(form_frame)
             if label_text == "Password":
                 entry.configure(show="*")
             self.entry_fields[label_text.replace(" ", "_").lower()] = entry
+            entry.grid(row=i, column=1, padx=10, pady=5)  # Expand entry fields
 
-            entry.grid(row=i + 1, column=1, padx=10, pady=5)
+        # Submit button
+        button_submit = ctk.CTkButton(form_frame, text="Submit", command=self.submit_registration_form,
+                                      fg_color="#1A936F", width=250)
+        button_submit.grid(row=len(labels), column=0, columnspan=2, pady=(20, 5))  # Span both columns
 
-        # Register button to submit the form
-        button_submit = ctk.CTkButton(self, text="Submit", command=self.submit_registration_form)
-        button_submit.grid(row=len(labels) + 1, column=0, columnspan=2, pady=(10, 5))
+        # Back to Login button
+        button_back = ctk.CTkButton(form_frame, text="Back to Login", command=self.display_login_form,
+                                    fg_color="#1A936F", width=250)
+        button_back.grid(row=len(labels) + 1, column=0, columnspan=2, pady=(0, 20))  # Span both columns
 
-        # Button to go back to the login form
-        button_back = ctk.CTkButton(self, text="Back to Login", command=self.display_login_form)
-        button_back.grid(row=len(labels) + 2, column=0, columnspan=2, pady=5)
+        # Configure grid weights for better resizing
+        form_frame.columnconfigure(0, weight=1)  # Allow column 0 to expand
+        form_frame.columnconfigure(1, weight=2)  # Allow column 1 to expand more than column 0
 
-        # Center the frame in the window
-        self.grid_rowconfigure(len(labels) + 3, weight=1)  # Allow space at the bottom for centering
+        # Center the whole form vertically
+        form_frame.rowconfigure(len(labels), weight=1)  # Allow the space before the buttons to expand
+        form_frame.rowconfigure(len(labels) + 1, weight=1)  # Allow the space after the buttons to expand
 
     def submit_registration_form(self):
-        # Gather and process the registration data
+        required_fields = ['first_name', 'last_name', 'email', 'password', 'gender', 'date_of_birth', 'phone_number',
+                           'street', 'city', 'country', 'postal_code']
+        for field in required_fields:
+            if field == 'gender':
+                if not self.gender_var.get():
+                    messagebox.showerror("Registration Error", "Gender is required.")
+                    return
+            else:
+                if not self.entry_fields.get(field, None) or self.entry_fields[field].get() == "":
+                    messagebox.showerror("Registration Error", f"{field.replace('_', ' ').title()} is required.")
+                    return
+
         first_name = self.entry_fields['first_name'].get()
         last_name = self.entry_fields['last_name'].get()
         email = self.entry_fields['email'].get()
         password = self.entry_fields['password'].get()
-        gender = self.gender_var.get()  # Get gender from the dropdown
+        gender = self.gender_var.get()
         dob = datetime.strptime(self.entry_fields['date_of_birth'].get(),
                                 "%Y-%m-%d").date() if 'date_of_birth' in self.entry_fields else None
-        # Dummy until this is a field only with integers
-        phone = self.entry_fields['phone_number'].get() if 'phone_number' in self.entry_fields else None
-        street = self.entry_fields['street'].get() if 'street' in self.entry_fields else None
-        city = self.entry_fields['city'].get() if 'city' in self.entry_fields else None
-        country = self.entry_fields['country'].get() if 'country' in self.entry_fields else None
-        postal_code = self.entry_fields['postal_code'].get() if 'postal_code' in self.entry_fields else None
+        phone = self.entry_fields['phone_number'].get()
+        street = self.entry_fields['street'].get()
+        city = self.entry_fields['city'].get()
+        country = self.entry_fields['country'].get()
+        postal_code = self.entry_fields['postal_code'].get()
 
-        # Register new customer
-        self.register_customer(first_name, last_name, email, password, gender, dob, phone, street, city, country, postal_code)
+        self.register_customer(first_name, last_name, email, password, gender, dob, phone, street, city, country,
+                               postal_code)
         messagebox.showinfo("Registration", "Registration Successful!")
         self.display_login_form()
 
-    def register_customer(self, first_name, last_name, email, password, gender, dob, phone, street, city, country, postal_code):
+    def register_customer(self, first_name, last_name, email, password, gender, dob, phone, street, city, country,
+                          postal_code):
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         new_customer = Customer(
             customer_first_name=first_name,

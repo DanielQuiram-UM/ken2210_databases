@@ -8,7 +8,6 @@ from pythonProject.models import Customer
 from pythonProject.database import session
 
 
-# Frame for the login page
 class LoginFrame(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent)
@@ -16,34 +15,42 @@ class LoginFrame(ctk.CTkFrame):
 
         self.configure(width=800, height=600)
 
-        # Create a label for the header
-        label_header = ctk.CTkLabel(self, text="Pizza Delivery System", text_color="Blue", font=("Arial", 24))
-        label_header.grid(row=0, column=0, pady=(20, 10))
+        # Header frame
+        header_frame = ctk.CTkFrame(self, fg_color="#1A936F", width=800, height=200)
+        header_frame.pack(side=tkinter.TOP, fill=tkinter.X)
 
-        # Create login form elements
-        label_email = ctk.CTkLabel(self, text="Email")
-        label_email.grid(row=1, column=0, pady=5)
+        # Header label
+        label_header = ctk.CTkLabel(header_frame, text="Pizza Delivery System", text_color="white", font=("Arial", 36, "bold"))
+        label_header.pack(side=tkinter.TOP, pady=50)
 
-        self.entry_email = ctk.CTkEntry(self, placeholder_text="Enter email...")
-        self.entry_email.grid(row=2, column=0, pady=5)
+        # Create a container frame for inputs and buttons
+        form_frame = ctk.CTkFrame(self, width=400, height=300, fg_color="#f5f5f5")
+        form_frame.pack(side=tkinter.TOP, pady=50)  # Add some padding to space from header
 
-        label_password = ctk.CTkLabel(self, text="Password")
-        label_password.grid(row=3, column=0, pady=5)
+        # Email label and entry field
+        label_email = ctk.CTkLabel(form_frame, text="Email", font=("Arial", 14))
+        label_email.pack(anchor="w", padx=20, pady=(20, 5))
 
-        self.entry_password = ctk.CTkEntry(self, show="*", placeholder_text="Enter password...")
-        self.entry_password.grid(row=4, column=0, pady=5)
+        self.entry_email = ctk.CTkEntry(form_frame, placeholder_text="Enter email...", width=250)
+        self.entry_email.pack(padx=20, pady=5)
+
+        # Password label and entry field
+        label_password = ctk.CTkLabel(form_frame, text="Password", font=("Arial", 14))
+        label_password.pack(anchor="w", padx=20, pady=(20, 5))
+
+        self.entry_password = ctk.CTkEntry(form_frame, show="*", placeholder_text="Enter password...", width=250)
+        self.entry_password.pack(padx=20, pady=5)
 
         # Login button
-        button_login = ctk.CTkButton(self, text="Login", command=self.login_customer)
-        button_login.grid(row=5, column=0, pady=10)
+        button_login = ctk.CTkButton(form_frame, text="Login", command=self.login_customer, fg_color="#1A936F", width=250)
+        button_login.pack(pady=(20, 10), padx=20)
 
-        button_register = ctk.CTkButton(self, text="Register", command=self.display_registration_form)
-        button_register.grid(row=6, column=0, pady=10)
+        # Register button
+        button_register = ctk.CTkButton(form_frame, text="Register", command=self.display_registration_form, fg_color="#1A936F", width=250)
+        button_register.pack(pady=(10, 20), padx=20)
 
-        # Center the frame elements within the parent frame
-        self.grid_rowconfigure(0, weight=1)  # Header
-        self.grid_rowconfigure(6, weight=1)  # Buttons
-        self.grid_columnconfigure(0, weight=1)  # Center column
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
 
     def login_customer(self):
         email = self.entry_email.get()
