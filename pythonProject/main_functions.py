@@ -109,9 +109,9 @@ def create_new_order():
     current_customer = current_customer_singleton.customer
 
     new_order = Order(
-        customer_id=current_customer.customer_id,  # Assuming you have a customer_id field in the Order model
+        customer_id=current_customer.customer_id,
         order_status="new")
-    current_order_singleton.set_order(new_order)  # Update the singleton with the new order
+    current_order_singleton.set_order(new_order)
 
     return CurrentOrder().order
 
@@ -201,7 +201,7 @@ def add_pizza_to_current_order(pizza_id):
 
 
 # Method to add an extra item to the current order of a customer
-def add_extra_item_to_order(product, order):
+def add_extra_item_to_order(item_id):
         current_order_singleton = CurrentOrder()
         current_order = current_order_singleton.order
 
@@ -254,7 +254,7 @@ def remove_pizza_from_current_order(pizza_id):
 
 
 # Method to remove an extra item from the current order if need be
-def remove_extra_item_from_current_order(product, order):
+def remove_extra_item_from_current_order(item_id):
     current_order_singleton = CurrentOrder()
 
     # Get the current order
@@ -391,12 +391,15 @@ def monitor_deliveries(session):
             customer = session.query(Customer).filter_by(customer_id=order.customer_id).first()
 
             if customer:
+                print("increase the pizza count for customer")
                 # Calculate the total amount of pizzas in this order
                 pizza_count_in_order = get_pizza_amount_in_order(order)
 
                 # Increment the customer's pizza count
                 customer.pizza_count += pizza_count_in_order
                 session.commit()
+            else:
+                print("couldn't find customer")
 
         delivery.deliverer.postal_code = None
         session.commit()
@@ -496,7 +499,9 @@ def calculate_earnings(selected_month, selected_region, selected_gender, selecte
     from sqlalchemy import func
 
     # Base query to filter orders and calculate earnings
-    query = session.query(Order).join(Customer, Order.customer_id == Customer.customer_id).join(
+    query = session.query(Order).filter_by(order_status='completed')
+
+    query = query.join(Customer, Order.customer_id == Customer.customer_id).join(
         Customer_Address, Customer.customer_id == Customer_Address.customer_id)
 
     # Apply filters if specified
@@ -557,7 +562,6 @@ def calculate_order_price(order):
             pizza_price = float(calculate_pizza_price(pizza))  # Ensure this is a float
             total_price += float(pizza_price * pizza_order.pizza_amount)  # Convert pizza_order.pizza_amount to float
 
-            print(total_price)
             # Check if this pizza is the cheapest one
             if cheapest_pizza_price == 0 or pizza_price < cheapest_pizza_price:
                 cheapest_pizza_price = pizza_price
@@ -576,14 +580,15 @@ def calculate_order_price(order):
             if cheapest_extra_item_price == 0 or float(extra_item.cost) < cheapest_extra_item_price:
                 cheapest_extra_item_price = float(extra_item.cost)
 
-    # Apply discount if applicable
-    if order.discount_applied:
-        total_price *= 0.90  # Apply a 10% discount
-
     # Exclude cheapest pizza and extra item if birthday products are free
     if order.free_birthday_products:
         total_price -= cheapest_pizza_price  # Exclude cheapest pizza
-        total_price -= cheapest_extra_item_price  # Exclude cheapest extra item
+        if cheapest_extra_item_price <= 4:
+            total_price -= cheapest_extra_item_price  # Exclude cheapest extra item
+
+    # Apply discount if applicable
+    if order.discount_applied:
+        total_price *= 0.90  # Apply a 10% discount
 
     # Ensure the total price does not go below zero
     total_price = max(total_price, 0.0)

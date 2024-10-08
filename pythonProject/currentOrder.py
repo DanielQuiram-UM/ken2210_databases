@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pythonProject.models import Order
 from pythonProject.database import session
-from pythonProject.currentCustomer import CurrentCustomer  # Assuming this class is defined similarly to CurrentOrder
+from pythonProject.currentCustomer import CurrentCustomer
 
 class CurrentOrder:
     _instance = None
