@@ -88,7 +88,6 @@ def get_or_create_item_suborder(order_id):
 
 # Find the dietary status of each pizza based on its ingredients
 def get_dietary_status(pizza):
-    #TODO: rn we just assume a pizza is vegan and then change it if it's not but isnt it prettier to just use that as a case as well?
     dietary_status = "vegan"
     # Iterate through each ingredient to adjust the status
     for ingredient in pizza.ingredients:
@@ -100,22 +99,8 @@ def get_dietary_status(pizza):
 
 ''' FUNCTIONS TO FIND OR REGISTER A CUSTOMER '''
 
-# Helper function to check if a customer already exists
-def find_or_create_customer(customer_email):
-    existing_customer = session.query(Customer).filter_by(customer_email=customer_email).first()
-    if existing_customer:
-        return existing_customer
-    #TODO: should we else not refer to 'register_customer'?
-    else:
-        new_customer = Customer(customer_email=customer_email)
-        session.add(new_customer)
-        session.commit()
-        return new_customer
-
-
 # Function to register a new customer
-def register_customer(first_name, last_name, email, password, gender, dob, phone, street, city, country,
-                      postal_code):
+def register_customer(first_name, last_name, email, password, gender, dob, phone, street, city, country, postal_code):
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
     new_customer = Customer(
         customer_first_name=first_name,
@@ -125,22 +110,24 @@ def register_customer(first_name, last_name, email, password, gender, dob, phone
         gender=gender,
         date_of_birth=dob,
         phone_number=phone,
+        )
+    new_address = Customer_Address(
         street=street,
         city=city,
         country=country,
         postal_code=postal_code
-    )
+        )
+    new_customer.address = new_address
     session.add(new_customer)
     session.commit()
+
 
 '''  FUNCTIONS TO CREATE, PLACE & PROCESS THE ORDERS'''
 
 # Function to create a new order in the 'my orders' page
 def create_new_order():
     current_order_singleton = CurrentOrder()
-    current_customer_singleton = CurrentCustomer()
-#TODO: why do we have both a current customer singleton and a current customer?
-    current_customer = current_customer_singleton.customer
+    current_customer = CurrentCustomer().customer
 
     new_order = Order(
         customer_id=current_customer.customer_id,
@@ -164,7 +151,7 @@ def place_current_order():
 
     session.commit()
 
-#TODO: why do we actually need these? shouldnt the full order already contain everything?
+
 # Method to add a pizza to the current order of a customer
 def add_pizza_to_current_order(pizza_id):
     current_order_singleton = CurrentOrder()
@@ -303,15 +290,6 @@ def find_or_create_delivery(delivery_id):
         session.commit()
         return new_delivery
 
-#TODO: dont feel like we need find_deliverer, get_or_create_deliverer and employ_another_guy seems redundant
-# Helper function to ensure the deliverers are not added to the database multiple times.
-def find_deliverer(deliverer_id):
-    existing_deliverer = session.query(Deliverer).filter_by(deliverer_id=deliverer_id).first()
-    if existing_deliverer:
-        return existing_deliverer
-    else:
-        return "Deliverer is not found!"
-
 
 # Check if a deliverer with the same first name and last name already exists
 def get_or_create_deliverer(deliverer):
@@ -323,7 +301,6 @@ def get_or_create_deliverer(deliverer):
     if existing_deliverer:
         return existing_deliverer
     else:
-    #TODO: should we here then not just refer to 'employ_another_guy'?
         # Create a new deliverer if not found
         new_deliverer = Deliverer(
             deliverer_first_name=deliverer["deliverer_first_name"],
@@ -351,7 +328,6 @@ def get_customer_from_order(order):
 
 
 # Method to process orders if an order was placed
-#TODO: what's the input here?
 def process_orders(session):
     now = datetime.now()
     print("Checking for 'placed orders")
@@ -435,7 +411,6 @@ def employ_another_guy(session):
     print("Could not find a unique new deliverer.")
 
 
-#TODO: I think we also need to check which orders have been placed/processed but not yet delivered
 # Function to monitor whether orders have been delivered
 def monitor_deliveries(session):
     print("Checking for completed deliveries...")
@@ -469,14 +444,6 @@ def monitor_deliveries(session):
         session.commit()
         print(f"Marked delivery {delivery.delivery_id} as completed and set {len(orders)} order(s) to 'completed' status. Delivery instance deleted.")
 
-
-#TODO: what do we still need this for?
-def get_order(order_id):
-    existing_order = session.query(Order).filter_by(order_id=order_id).first()
-    if existing_order:
-        return existing_order
-    else:
-        return "Order not found!"
 
 
 ''' CALCULATION & DISCOUNT FUNCTIONS '''
@@ -540,10 +507,8 @@ def calculate_order_price(order):
 
 
 #Possibility to add a discount if the discount string is valid
-#TODO: should we not have an if-else statement in case someone fills in an invalid discount string?
-#TODO: can also only be used once!!!
 
-def get_or_create_discount_code(discount_code_string):
+def create_discount_code(discount_code_string):
     new_discount_code = DiscountCode(
         discount_string=discount_code_string
     )
@@ -552,22 +517,10 @@ def get_or_create_discount_code(discount_code_string):
     return  new_discount_code
 
 
-#TODO: what is happening here?
-def remove_discount():
-    current_order_singleton = CurrentOrder()
-    current_order = current_order_singleton.order
-    if not current_order:
-        return
-    current_order.discount_applied = False
-    session.commit()
-
-
-# TODO: what is happening here?
-# Method to apply a discount without a discount code
+# Method to apply the discount you get if you've ordered 10 pizzas
 def apply_pizza_discount():
     current_order_singleton = CurrentOrder()
     current_order = current_order_singleton.order
-
     if not current_order:
         return
     current_order.discount_applied = True
@@ -584,6 +537,7 @@ def apply_discount_code(discount_code_entry):
             return
         current_order.discount_applied = True
         session.commit()
+
 
 # Applies a birthday discount to the current order if today is the customer's birthday.
 def apply_birthday_discount():
@@ -608,8 +562,6 @@ def apply_birthday_discount():
                 # Commit the changes to the database
                 session.commit()
 
-
-#TODO: method to give 10% discount when 10th pizza
 
 # Method to calculate the earnings reports based on different filters
 def calculate_earnings(selected_month, selected_region, selected_gender, selected_age):

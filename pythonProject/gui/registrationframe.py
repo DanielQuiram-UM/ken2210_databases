@@ -3,6 +3,8 @@ from tkinter import messagebox
 import bcrypt
 import customtkinter as ctk
 from tkcalendar import DateEntry
+
+from pythonProject.main_functions import register_customer
 from pythonProject.models import Customer, Customer_Address
 from pythonProject.database import session
 from datetime import datetime
@@ -101,33 +103,11 @@ class RegistrationFrame(ctk.CTkFrame):
         country = self.entry_fields['country'].get()
         postal_code = self.entry_fields['postal_code'].get()
 
-        self.register_customer(first_name, last_name, email, password, gender, dob, phone, street, city, country,
-                               postal_code)
+        register_customer(first_name, last_name, email, password, gender, dob, phone, street, city, country, postal_code)
+
         messagebox.showinfo("Registration", "Registration Successful!")
         self.display_login_form()
 
-#TODO: we already have this function in the main_functions file so remove it in one place?
-    def register_customer(self, first_name, last_name, email, password, gender, dob, phone, street, city, country,
-                          postal_code):
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-        new_customer = Customer(
-            customer_first_name=first_name,
-            customer_last_name=last_name,
-            customer_email=email,
-            password=hashed_password.decode('utf-8'),
-            gender=gender,
-            date_of_birth=dob,
-            phone_number=phone,
-        )
-        new_address = Customer_Address(
-            street=street,
-            city=city,
-            country=country,
-            postal_code=postal_code
-        )
-        new_customer.address = new_address
-        session.add(new_customer)
-        session.commit()
 
     def display_login_form(self):
         self.parent.show_frame("LoginFrame")

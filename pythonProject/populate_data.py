@@ -3,7 +3,7 @@ import random
 
 from pythonProject.database import init_db
 from pythonProject.main_functions import get_or_create_pizza, get_or_create_ingredient, match_ingredients_to_pizza, \
-    get_or_create_deliverer, get_or_create_extra_item, get_or_create_discount_code
+    get_or_create_deliverer, get_or_create_extra_item, get_or_create_discount_code, create_discount_code
 from pythonProject.models import Deliverer
 
 
@@ -93,7 +93,7 @@ def populate_data():
     ]
 
     for discount_code in discount_codes:
-        get_or_create_discount_code(discount_code)
+        create_discount_code(discount_code)
 
 if __name__ == '__main__':
     init_db()

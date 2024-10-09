@@ -74,9 +74,8 @@ class ExtraItemOrder(Base):
     )
 
 # Defining the one-many relationships
-#TODO: why is there a pizza here in the extra item part????
     order = relationship('Order', back_populates='extra_item_orders')
-    pizza = relationship('ExtraItem', backref='extra_item_orders')
+    extra_item = relationship('ExtraItem', backref='extra_item_orders')
 
 # Creating the customer table
 class Customer(Base):
@@ -106,7 +105,6 @@ class Customer_Address(Base):
     customer_id = Column(Integer, ForeignKey('customers.customer_id'), nullable=False)
 
     # Establish the relationship back to Customer
-#TODO: where does address come from?
     customer = relationship("Customer", back_populates="address")
 
 # Creating the order information table

@@ -535,8 +535,6 @@ class MainFrame(ctk.CTkFrame):
         # Redirect to the orders to see the placed order
         self.show_page("My Orders")
 
-    from datetime import datetime, timedelta
-
 
     def create_orders_page(self):
         """Create the My Orders page view."""
@@ -632,7 +630,7 @@ class MainFrame(ctk.CTkFrame):
                 )
                 cancel_button.pack(pady=(5, 10), anchor="e", padx=(0, 20))
 
-#TODO: dont we already have this one in main functions?
+
     def cancel_order(self, order_id):
         cancel_order(order_id)
         self.show_page("My Orders")  # Refreshes the orders page to reflect changes
