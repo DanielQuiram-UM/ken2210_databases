@@ -17,14 +17,12 @@ from pythonProject.main_functions import calculate_pizza_price, add_pizza_to_cur
 from pythonProject.models import Pizza, Ingredient, Order, Deliverer, Delivery, ExtraItem
 
 
-#to remind ourselves: self refers to working in the current GUI frame
+# to remind ourselves: self refers to working in the current GUI frame
 
 class MainFrame(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
-
-        self.current_page = "Pizzas"
 
         self.configure(width=800, height=600)
 
@@ -125,7 +123,6 @@ class MainFrame(ctk.CTkFrame):
 
         # Display the default page
         self.show_page("Pizzas")
-
 
     def show_page(self, page_name):
         """Switch to the selected page within the main view."""
@@ -572,7 +569,7 @@ class MainFrame(ctk.CTkFrame):
                 remaining_minutes = get_remaining_delivery_time(order.order_id)
             # estimating the remaining minutes
             else:
-                remaining_minutes = max(ORDER_COMPLETION_TIME - minutes_since_order + 1,0)
+                remaining_minutes = max(ORDER_COMPLETION_TIME - float(minutes_since_order), 1)
 
             # Create a frame for each order
             order_frame = CTkFrame(master=scrollable_frame, fg_color="#eaeaea", height=140, corner_radius=8)

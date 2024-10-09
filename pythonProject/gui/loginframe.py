@@ -4,6 +4,7 @@ from tkinter import messagebox
 import bcrypt
 
 from pythonProject.currentCustomer import CurrentCustomer
+from pythonProject.currentOrder import CurrentOrder
 from pythonProject.models import Customer
 from pythonProject.database import session
 
@@ -61,6 +62,8 @@ class LoginFrame(ctk.CTkFrame):
         if customer and bcrypt.checkpw(password.encode('utf-8'), customer.password.encode('utf-8')):
             current_customer = CurrentCustomer()
             current_customer.set_customer(customer)
+            current_order = CurrentOrder()
+            current_order.clear()
             self.parent.show_frame("MainFrame")
         else:
             messagebox.showerror("Login", "Incorrect email or password.")

@@ -8,8 +8,8 @@ HOST = 'localhost'
 PORT = '3306'
 DATABASE = 'pizza_delivery_system'
 
-DELIVERY_TIME_IN_MINUTES = 30
-ORDER_CANCELLATION_TIMEFRAME = 5
+DELIVERY_TIME_IN_MINUTES = 30  # how long for a delivery to take (standard is 30 mins)
+ORDER_CANCELLATION_TIMEFRAME = 5  # how long an order can be cancelled (standard is 5 mins)
 
 ORDER_COMPLETION_TIME = DELIVERY_TIME_IN_MINUTES + ORDER_CANCELLATION_TIMEFRAME
 
