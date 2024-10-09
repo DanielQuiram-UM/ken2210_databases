@@ -13,14 +13,14 @@ def monitor_orders():
     """Main monitoring function to check for orders and deliveries."""
     try:
         while True:
-            session = Session()  # Create a new session each cycle
+            session = Session()
             print("Processing orders, delivering, and monitoring deliveries...")
             process_orders(session)
             deliver_orders(session)
             monitor_deliveries(session)
-            session.commit()  # Commit changes to ensure they are visible
-            session.close()  # Close session after operations
-            time.sleep(10)  # Check every 30 seconds
+            session.commit()
+            session.close()
+            time.sleep(10)
     except KeyboardInterrupt:
         print("Monitoring stopped.")
 

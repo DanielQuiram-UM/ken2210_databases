@@ -562,6 +562,16 @@ def apply_birthday_discount():
                 # Commit the changes to the database
                 session.commit()
 
+# Method to calculate the remaining delivery time of an order
+def get_remaining_delivery_time(order_id):
+    # Query the order with the specified order_id
+    order = session.query(Order).filter_by(order_id=order_id).first()
+    if order and order.delivery:
+        minutes_since_order = (datetime.now() - order.delivery.initiation_time).total_seconds() / 60
+        remaining_time = max(DELIVERY_TIME_IN_MINUTES - minutes_since_order + 1, 0)
+        return remaining_time
+
+    return None
 
 # Method to calculate the earnings reports based on different filters
 def calculate_earnings(selected_month, selected_region, selected_gender, selected_age):

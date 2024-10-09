@@ -12,7 +12,8 @@ from pythonProject.database import session
 from pythonProject.main_functions import calculate_pizza_price, add_pizza_to_current_order, place_current_order, \
     remove_pizza_from_current_order, create_new_order, cancel_order, get_customer_from_order, get_dietary_status, \
     calculate_earnings, apply_discount_code, apply_birthday_discount, calculate_order_price, apply_pizza_discount, \
-    remove_discount, add_extra_item_to_order, remove_extra_item_from_current_order
+    add_extra_item_to_order, remove_extra_item_from_current_order, process_orders, deliver_orders, \
+    monitor_deliveries, get_remaining_delivery_time
 from pythonProject.models import Pizza, Ingredient, Order, Deliverer, Delivery, ExtraItem
 
 
@@ -542,6 +543,8 @@ class MainFrame(ctk.CTkFrame):
         for widget in self.main_view.winfo_children():
             widget.destroy()
 
+        self.apply_monitoring()
+
         # Create a title label for the page
         CTkLabel(master=self.main_view, text="My Orders", font=("Arial Black", 25), text_color="#2A8C55").pack(pady=20)
 
@@ -564,8 +567,12 @@ class MainFrame(ctk.CTkFrame):
             time_since_order = datetime.now() - order.order_timestamp
             minutes_since_order = time_since_order.total_seconds() / 60
 
-            # adding one minute to make it more realistic
-            remaining_minutes = max(ORDER_COMPLETION_TIME - minutes_since_order + 1,0)
+
+            if order.order_status == "being delivered":
+                remaining_minutes = get_remaining_delivery_time(order.order_id)
+            # estimating the remaining minutes
+            else:
+                remaining_minutes = max(ORDER_COMPLETION_TIME - minutes_since_order + 1,0)
 
             # Create a frame for each order
             order_frame = CTkFrame(master=scrollable_frame, fg_color="#eaeaea", height=140, corner_radius=8)
@@ -683,6 +690,8 @@ class MainFrame(ctk.CTkFrame):
         for widget in self.main_view.winfo_children():
             widget.destroy()
 
+        self.apply_monitoring()
+
         # Create a title label for the page
         CTkLabel(master=self.main_view, text="Orders and Active Deliveries", font=("Arial Black", 25),
                  text_color="#2A8C55").pack(pady=20)
@@ -791,6 +800,8 @@ class MainFrame(ctk.CTkFrame):
         # Clear existing widgets in the main view
         for widget in self.main_view.winfo_children():
             widget.destroy()
+
+        self.apply_monitoring()
 
         # Create a title label for the page
         CTkLabel(master=self.main_view, text="Deliverers List", font=("Arial Black", 25), text_color="#2A8C55").pack(
@@ -1037,3 +1048,8 @@ class MainFrame(ctk.CTkFrame):
     def remove_extra_item_from_current_order(self,item_id):
         remove_extra_item_from_current_order(item_id)
         self.show_page("Current Order")
+
+    def apply_monitoring(self):
+        process_orders(session)
+        deliver_orders(session)
+        monitor_deliveries(session)
