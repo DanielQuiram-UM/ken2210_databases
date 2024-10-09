@@ -52,6 +52,7 @@ class LoginFrame(ctk.CTkFrame):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
+
     def login_customer(self):
         email = self.entry_email.get()
         password = self.entry_password.get()
@@ -63,6 +64,7 @@ class LoginFrame(ctk.CTkFrame):
             self.parent.show_frame("MainFrame")
         else:
             messagebox.showerror("Login", "Incorrect email or password.")
+
 
     def display_registration_form(self):
         self.parent.show_frame("RegistrationFrame")

@@ -19,6 +19,7 @@ class Pizza(Base):
     pizza_id = Column(Integer, primary_key=True)
     pizza_name = Column(String(50))
     ingredients = relationship("Ingredient", secondary=pizza_ingredient_association, back_populates="pizzas")
+    #use backpopulates to link the two tables (i.e., show there's a relationship) so that if one table is updates so is the other
 
 # Creating the ingredient table
 class Ingredient(Base):
@@ -36,7 +37,7 @@ class PizzaOrder(Base):
     pizza_id = Column(Integer, ForeignKey('pizzas.pizza_id'), nullable=False)
     pizza_amount = Column(Integer, default=1, nullable=False)
 
-# Composite primary keys in joins table (so using 2 foreign keys)
+# Defining the composite primary keys in our joins table above (using 2 foreign keys)
     __table_args__ = (
         PrimaryKeyConstraint('order_id', 'pizza_id'),
     )
@@ -67,12 +68,13 @@ class ExtraItemOrder(Base):
     item_id = Column(Integer, ForeignKey('extra_items.item_id'), nullable=False)
     item_amount = Column(Integer, default=1, nullable=False)
 
-# Composite primary key for the extra item order junction table
+# Defining the composite primary key for the extra item order junction table
     __table_args__ = (
         PrimaryKeyConstraint('order_id', 'item_id'),
     )
 
- # Defining the one-many relationships
+# Defining the one-many relationships
+#TODO: why is there a pizza here in the extra item part????
     order = relationship('Order', back_populates='extra_item_orders')
     pizza = relationship('ExtraItem', backref='extra_item_orders')
 
@@ -100,11 +102,11 @@ class Customer_Address(Base):
     city = Column(String(50), nullable=False)
     country = Column(String(50), nullable=False)
     postal_code = Column(String(20), nullable=False)
-
     # Foreign key to link to the Customer
     customer_id = Column(Integer, ForeignKey('customers.customer_id'), nullable=False)
 
     # Establish the relationship back to Customer
+#TODO: where does address come from?
     customer = relationship("Customer", back_populates="address")
 
 # Creating the order information table
@@ -118,11 +120,11 @@ class Order(Base):
     free_birthday_products = Column(Boolean, default=False)
     order_status = Column(String(50), nullable=False)
 
-    # Defining the one-to-many relationship with the customer & delivery class
+    # Defining the one-to-many relationship with the customer & delivery classes
     customer = relationship('Customer', backref='orders')
     delivery = relationship('Delivery', backref='orders')
 
-    # Defining the child relations
+    # Defining the child relations --> adding a cascade with 'delete orphans' to ensure that - if an order is cancelled - the pizza and extra item suborders will also be deleted
     pizza_orders = relationship('PizzaOrder', back_populates='order', cascade="all, delete-orphan")
     extra_item_orders = relationship('ExtraItemOrder', back_populates='order', cascade="all, delete-orphan")
 

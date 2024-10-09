@@ -125,6 +125,7 @@ class MainFrame(ctk.CTkFrame):
         # Display the default page
         self.show_page("Pizzas")
 
+
     def show_page(self, page_name):
         """Switch to the selected page within the main view."""
         self.current_page = page_name
@@ -135,6 +136,7 @@ class MainFrame(ctk.CTkFrame):
         # Create the page content using the corresponding method
         if page_name in self.pages:
             self.pages[page_name]()
+
 
     def create_pizzas_page(self):
         """Create the Pizzas page view."""
@@ -153,6 +155,7 @@ class MainFrame(ctk.CTkFrame):
 
         # Schedule the layout of pizza details to allow for complete rendering
         self.main_view.after(200, self.layout_pizza_details, pizzas, current_order, scrollable_frame)
+
 
     def layout_pizza_details(self, pizzas, current_order, scrollable_frame):
         """Layout pizza details after the main view has been rendered."""
@@ -223,13 +226,16 @@ class MainFrame(ctk.CTkFrame):
             )
             increase_button.pack(side="left", padx=(5, 0))
 
+
     def add_pizza_to_current_order(self,pizza_id):
         add_pizza_to_current_order(pizza_id)
         self.show_page("Current Order")
 
+
     def remove_pizza_from_current_order(self,pizza_id):
         remove_pizza_from_current_order(pizza_id)
         self.show_page("Current Order")
+
 
     def create_account_page(self):
         """Create the Account page view."""
@@ -280,6 +286,7 @@ class MainFrame(ctk.CTkFrame):
         else:
             # No customer set, show a placeholder message
             CTkLabel(master=self.main_view, text="No customer information available.", font=("Arial", 15)).pack(pady=10)
+
 
     def create_current_order_page(self):
         """Create the Current Order page view."""
@@ -495,9 +502,11 @@ class MainFrame(ctk.CTkFrame):
             CTkLabel(master=container_frame, text="Add items to place your order.", font=("Arial", 14),
                      text_color="#555").pack(pady=20)
 
+
     def apply_discount_code(self,discount_code_entry):
         apply_discount_code(discount_code_entry)
         self.show_page("Current Order")
+
 
     def update_scrollable_frame_height(self, scrollable_frame):
         """Update the height of the scrollable frame based on the container frame's height."""
@@ -515,8 +524,8 @@ class MainFrame(ctk.CTkFrame):
             # Optionally, bind the resize event to update the height dynamically
             self.main_view.bind("<Configure>", lambda e: self.update_scrollable_frame_height(scrollable_frame))
 
-    def place_order_and_reload(self):
 
+    def place_order_and_reload(self):
         # Place the order
         place_current_order()
 
@@ -527,6 +536,7 @@ class MainFrame(ctk.CTkFrame):
         self.show_page("My Orders")
 
     from datetime import datetime, timedelta
+
 
     def create_orders_page(self):
         """Create the My Orders page view."""
@@ -622,9 +632,11 @@ class MainFrame(ctk.CTkFrame):
                 )
                 cancel_button.pack(pady=(5, 10), anchor="e", padx=(0, 20))
 
+#TODO: dont we already have this one in main functions?
     def cancel_order(self, order_id):
         cancel_order(order_id)
         self.show_page("My Orders")  # Refreshes the orders page to reflect changes
+
 
     def create_ingredients_page(self):
         """Create the Ingredients page view."""
@@ -665,6 +677,7 @@ class MainFrame(ctk.CTkFrame):
                 text_color="#000"
             )
             ingredient_name_label.pack(anchor="w", side="left", padx=(20, 0))
+
 
     def create_deliveries_page(self):
         """Create the Orders and Active Deliveries page view."""
@@ -774,6 +787,7 @@ class MainFrame(ctk.CTkFrame):
             CTkLabel(master=scrollable_frame, text="No active deliveries at the moment.", font=("Arial", 16),
                      text_color="#555").pack(pady=20)
 
+
     def create_deliverers_page(self):
         """Create the Deliverers page view."""
         # Clear existing widgets in the main view
@@ -845,6 +859,7 @@ class MainFrame(ctk.CTkFrame):
                                  text="Delivery Complete",
                                  font=("Arial", 16), text_color="#2A8C55").pack(side="right", anchor="e")
 
+
     def create_earnings_page(self):
         """Create the Earnings page view."""
         # Clear existing widgets in the main view
@@ -904,6 +919,7 @@ class MainFrame(ctk.CTkFrame):
         )
         proceed_button.pack(pady=20)
 
+
     def show_earnings_report(self, form_frame, month, region, gender, age):
         """Display the earnings report after applying the filter criteria and calculating earnings."""
         # Clear the form frame for displaying the report
@@ -933,13 +949,16 @@ class MainFrame(ctk.CTkFrame):
         )
         go_back_button.pack(pady=20)
 
+
     def logout(self):
         self.parent.show_frame("LoginFrame")
+
 
     def refresh_current_frame(self):
         """Refresh the current frame by committing the session and reloading the page."""
         session.commit()  # Commit any pending transactions to the database
         self.show_page(self.current_page)
+
 
     def create_extra_items_page(self):
         """Create the Extra Items page view."""
@@ -958,6 +977,7 @@ class MainFrame(ctk.CTkFrame):
 
         # Schedule the layout of extra item details to allow for complete rendering
         self.main_view.after(200, self.layout_extra_item_details, extra_items, current_order, scrollable_frame)
+
 
     def layout_extra_item_details(self, extra_items, current_order, scrollable_frame):
         """Layout extra item details after the main view has been rendered."""
@@ -1010,15 +1030,12 @@ class MainFrame(ctk.CTkFrame):
                 )
             increase_button.pack(side="left", padx=(5, 0))
 
+
     def add_extra_item_to_current_order(self,item_id):
         add_extra_item_to_order(item_id)
         self.show_page("Current Order")
 
+
     def remove_extra_item_from_current_order(self,item_id):
         remove_extra_item_from_current_order(item_id)
         self.show_page("Current Order")
-
-
-#TODO: add estimated delivery time to order confirmation --> Daniel
-
-#TODO: earnings page solely visible for the boss of the pizza place

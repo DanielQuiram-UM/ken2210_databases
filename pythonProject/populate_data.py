@@ -16,7 +16,7 @@ def populate_data():
     for pizza_name in pizzas:
         get_or_create_pizza(pizza_name)
 
-    # Filling in the ingredients table
+    # Filling in the ingredients table with the corresponding cost & dietary status per ingredient
     ingredients = [
         {"ingredient_name": "Pizza Dough", "ingredient_cost": 2.00, "dietary_status": "vegetarian"},
         {"ingredient_name": "Tomato Sauce", "ingredient_cost": 2.00, "dietary_status": "vegan"},
@@ -61,6 +61,7 @@ def populate_data():
     for pizza_name, ingredient_names in pizza_ingredient_map.items():
         match_ingredients_to_pizza(pizza_name, ingredient_names)
 
+    #Filling in the extra items menu with the corresponding price & dietary status per item
     extra_items = [
         {"item_name": "Coca-Cola", "cost": 3.00, "dietary_status": "vegan"},
         {"item_name": "Ice Tea", "cost": 3.00, "dietary_status": "vegan"},
@@ -74,6 +75,7 @@ def populate_data():
     for item_name in extra_items:
         get_or_create_extra_item(item_name)
 
+    #Creating a list with our fave employees
     deliverers = [
         {"deliverer_first_name": "Anne", "deliverer_last_name": "Chovy"},
         {"deliverer_first_name": "Tony", "deliverer_last_name": "Tomato"},
@@ -85,6 +87,7 @@ def populate_data():
     for deliverer in deliverers:
         get_or_create_deliverer(deliverer)
 
+    #Creation of two discount codes that could be applied if customers have a right to these
     discount_codes = [
         "PIZZA10", "HAPPYHOUR"
     ]

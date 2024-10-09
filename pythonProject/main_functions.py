@@ -86,14 +86,26 @@ def get_or_create_item_suborder(order_id):
         session.commit()
         return new_item_suborder
 
+# Find the dietary status of each pizza based on its ingredients
+def get_dietary_status(pizza):
+    #TODO: rn we just assume a pizza is vegan and then change it if it's not but isnt it prettier to just use that as a case as well?
+    dietary_status = "vegan"
+    # Iterate through each ingredient to adjust the status
+    for ingredient in pizza.ingredients:
+        if ingredient.dietary_status == "non-vegetarian":
+            return "non-vegetarian"
+        elif ingredient.dietary_status == "vegetarian":
+            dietary_status = "vegetarian"
+    return dietary_status
 
-''' CUSTOMER & ORDER DELIVERY INFO'''
+''' FUNCTIONS TO FIND OR REGISTER A CUSTOMER '''
 
 # Helper function to check if a customer already exists
 def find_or_create_customer(customer_email):
     existing_customer = session.query(Customer).filter_by(customer_email=customer_email).first()
     if existing_customer:
         return existing_customer
+    #TODO: should we else not refer to 'register_customer'?
     else:
         new_customer = Customer(customer_email=customer_email)
         session.add(new_customer)
@@ -101,61 +113,41 @@ def find_or_create_customer(customer_email):
         return new_customer
 
 
-# Function to create a new order
+# Function to register a new customer
+def register_customer(first_name, last_name, email, password, gender, dob, phone, street, city, country,
+                      postal_code):
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    new_customer = Customer(
+        customer_first_name=first_name,
+        customer_last_name=last_name,
+        customer_email=email,
+        password=hashed_password.decode('utf-8'),
+        gender=gender,
+        date_of_birth=dob,
+        phone_number=phone,
+        street=street,
+        city=city,
+        country=country,
+        postal_code=postal_code
+    )
+    session.add(new_customer)
+    session.commit()
+
+'''  FUNCTIONS TO CREATE, PLACE & PROCESS THE ORDERS'''
+
+# Function to create a new order in the 'my orders' page
 def create_new_order():
     current_order_singleton = CurrentOrder()
     current_customer_singleton = CurrentCustomer()
-
+#TODO: why do we have both a current customer singleton and a current customer?
     current_customer = current_customer_singleton.customer
 
     new_order = Order(
         customer_id=current_customer.customer_id,
         order_status="new")
     current_order_singleton.set_order(new_order)
-
     return CurrentOrder().order
 
-
-# Helper function to check if the delivery already exists
-def find_or_create_delivery(delivery_id):
-    existing_delivery = session.query(Delivery).filter_by(delivery_id=delivery_id).first()
-    if existing_delivery:
-        return existing_delivery
-    else:
-        new_delivery = Delivery(delivery_id=delivery_id)
-        session.add(new_delivery)
-        session.commit()
-        return new_delivery
-
-
-def get_or_create_deliverer(deliverer):
-    # Check if a deliverer with the same first name and last name already exists
-    existing_deliverer = session.query(Deliverer).filter_by(
-        deliverer_first_name=deliverer["deliverer_first_name"],
-        deliverer_last_name=deliverer["deliverer_last_name"]
-    ).first()
-
-    if existing_deliverer:
-        return existing_deliverer
-    else:
-        # Create a new deliverer if not found
-        new_deliverer = Deliverer(
-            deliverer_first_name=deliverer["deliverer_first_name"],
-            deliverer_last_name=deliverer["deliverer_last_name"]
-        )
-        session.add(new_deliverer)
-        session.commit()
-        return new_deliverer
-
-def get_or_create_discount_code(discount_code_string):
-    new_discount_code = DiscountCode(
-        discount_string=discount_code_string
-    )
-    session.add(new_discount_code)
-    session.commit()
-    return  new_discount_code
-
-''' PLACING & PROCESSING THE ORDER FUNCTIONS'''
 
 # Method to place the current order instance
 def place_current_order():
@@ -171,10 +163,8 @@ def place_current_order():
         current_customer.pizza_count -= 10
 
     session.commit()
-# Method to find the customer that belongs to the current order
-def get_customer_from_order(order):
-    return session.query(Customer).filter(Customer.customer_id == order.customer_id).first()
 
+#TODO: why do we actually need these? shouldnt the full order already contain everything?
 # Method to add a pizza to the current order of a customer
 def add_pizza_to_current_order(pizza_id):
     current_order_singleton = CurrentOrder()
@@ -282,6 +272,16 @@ def remove_extra_item_from_current_order(item_id):
         session.commit()
 
 
+# Method to get the total amount of pizzas in an order
+def get_pizza_amount_in_order(order):
+    pizza_orders = session.query(PizzaOrder).filter_by(order_id=order.order_id).all()
+
+    # Sum up the quantity of each pizza in the order
+    total_pizzas = sum(pizza_order.pizza_amount for pizza_order in pizza_orders)
+
+    return total_pizzas
+
+
 # Method to cancel the order with the given order ID and refresh the page.
 def cancel_order(order_id):
     order_to_cancel = session.query(Order).filter_by(order_id=order_id).first()
@@ -290,27 +290,49 @@ def cancel_order(order_id):
         session.commit()  # Save the changes to the database
 
 
-''' CUSTOMER & DELIVERY FUNCTIONS'''
+''' DELIVERY FUNCTIONS'''
 
-# Function to register a new customer
-def register_customer(first_name, last_name, email, password, gender, dob, phone, street, city, country,
-                      postal_code):
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-    new_customer = Customer(
-        customer_first_name=first_name,
-        customer_last_name=last_name,
-        customer_email=email,
-        password=hashed_password.decode('utf-8'),
-        gender=gender,
-        date_of_birth=dob,
-        phone_number=phone,
-        street=street,
-        city=city,
-        country=country,
-        postal_code=postal_code
-    )
-    session.add(new_customer)
-    session.commit()
+# Helper function to check if the delivery already exists
+def find_or_create_delivery(delivery_id):
+    existing_delivery = session.query(Delivery).filter_by(delivery_id=delivery_id).first()
+    if existing_delivery:
+        return existing_delivery
+    else:
+        new_delivery = Delivery(delivery_id=delivery_id)
+        session.add(new_delivery)
+        session.commit()
+        return new_delivery
+
+#TODO: dont feel like we need find_deliverer, get_or_create_deliverer and employ_another_guy seems redundant
+# Helper function to ensure the deliverers are not added to the database multiple times.
+def find_deliverer(deliverer_id):
+    existing_deliverer = session.query(Deliverer).filter_by(deliverer_id=deliverer_id).first()
+    if existing_deliverer:
+        return existing_deliverer
+    else:
+        return "Deliverer is not found!"
+
+
+# Check if a deliverer with the same first name and last name already exists
+def get_or_create_deliverer(deliverer):
+    existing_deliverer = session.query(Deliverer).filter_by(
+        deliverer_first_name=deliverer["deliverer_first_name"],
+        deliverer_last_name=deliverer["deliverer_last_name"]
+    ).first()
+
+    if existing_deliverer:
+        return existing_deliverer
+    else:
+    #TODO: should we here then not just refer to 'employ_another_guy'?
+        # Create a new deliverer if not found
+        new_deliverer = Deliverer(
+            deliverer_first_name=deliverer["deliverer_first_name"],
+            deliverer_last_name=deliverer["deliverer_last_name"]
+        )
+        session.add(new_deliverer)
+        session.commit()
+        return new_deliverer
+
 
 # Method to assign a postal code to a deliverer
 def assign_deliverer(postal_code, session):
@@ -322,6 +344,14 @@ def assign_deliverer(postal_code, session):
         return deliverer
     return None
 
+
+# Method to find the customer that belongs to the current order
+def get_customer_from_order(order):
+    return session.query(Customer).filter(Customer.customer_id == order.customer_id).first()
+
+
+# Method to process orders if an order was placed
+#TODO: what's the input here?
 def process_orders(session):
     now = datetime.now()
     print("Checking for 'placed orders")
@@ -330,9 +360,8 @@ def process_orders(session):
         order.order_status = 'in process'
         session.commit()
 
+# Method to process orders that are in 'in process' status and assign them to deliveries
 def deliver_orders(session):
-    """Process orders that are in 'in process' status and assign them to deliveries."""
-
     print("Checking for 'in process' orders...")
     orders = session.query(Order).filter_by(order_status='in process').all()
     if not orders:
@@ -372,45 +401,9 @@ def deliver_orders(session):
 
         print(f"Assigned {len(orders)} order(s) to deliverer {deliverer.deliverer_first_name} {deliverer.deliverer_last_name} for postal code {postal_code}.")
 
-def monitor_deliveries(session):
-    print("Checking for completed deliveries...")
-    now = datetime.now()
-    completed_deliveries = session.query(Delivery)\
-        .filter(Delivery.initiation_time <= now - timedelta(minutes=DELIVERY_TIME_IN_MINUTES)).all()
 
-    if not completed_deliveries:
-        print("No deliveries to complete.")
-        return
-
-    for delivery in completed_deliveries:
-        orders = session.query(Order).filter_by(delivery_id=delivery.delivery_id).all()
-        for order in orders:
-            order.order_status = 'completed'
-
-            # Retrieve the customer associated with this order
-            customer = session.query(Customer).filter_by(customer_id=order.customer_id).first()
-
-            if customer:
-                print("increase the pizza count for customer")
-                # Calculate the total amount of pizzas in this order
-                pizza_count_in_order = get_pizza_amount_in_order(order)
-
-                # Increment the customer's pizza count
-                customer.pizza_count += pizza_count_in_order
-                session.commit()
-            else:
-                print("couldn't find customer")
-
-        delivery.deliverer.postal_code = None
-        session.commit()
-
-        session.delete(delivery)
-        session.commit()
-
-        print(f"Marked delivery {delivery.delivery_id} as completed and set {len(orders)} order(s) to 'completed' status. Delivery instance deleted.")
-
+#Employ another deliverer with a unique name not already in the database."""
 def employ_another_guy(session):
-    """Employ another deliverer with a unique name not already in the database."""
     first_names = ["Chris", "Sam", "Alex", "Jordan", "Taylor", "Casey", "Jamie", "Robin", "Morgan", "Charlie"]
     last_names = ["Pepperoni", "Mozzarella", "Gorgonzola", "Olive", "Pesto", "Basilico", "Alfredo", "Parmesan",
                   "Garlic", "Margherita"]
@@ -439,8 +432,45 @@ def employ_another_guy(session):
         attempts += 1
 
     # If no unique name was found after the maximum attempts
-    print("Could not find a unique name for a new deliverer.")
+    print("Could not find a unique new deliverer.")
 
+
+#TODO: I think we also need to check which orders have been placed/processed but not yet delivered
+# Function to monitor whether orders have been delivered
+def monitor_deliveries(session):
+    print("Checking for completed deliveries...")
+    now = datetime.now()
+    completed_deliveries = session.query(Delivery)\
+        .filter(Delivery.initiation_time <= now - timedelta(minutes=DELIVERY_TIME_IN_MINUTES)).all()
+
+    if not completed_deliveries:
+        print("No deliveries to complete.")
+        return
+
+    for delivery in completed_deliveries:
+        orders = session.query(Order).filter_by(delivery_id=delivery.delivery_id).all()
+        for order in orders:
+            order.order_status = 'completed'
+            # Retrieve the customer associated with this order
+            customer = session.query(Customer).filter_by(customer_id=order.customer_id).first()
+            if customer:
+                print("increase the pizza count for customer")
+                # Calculate the total amount of pizzas in this order
+                pizza_count_in_order = get_pizza_amount_in_order(order)
+                # Increment the customer's pizza count
+                customer.pizza_count += pizza_count_in_order
+                session.commit()
+            else:
+                print("couldn't find customer")
+
+        delivery.deliverer.postal_code = None
+        session.commit()
+        session.delete(delivery)
+        session.commit()
+        print(f"Marked delivery {delivery.delivery_id} as completed and set {len(orders)} order(s) to 'completed' status. Delivery instance deleted.")
+
+
+#TODO: what do we still need this for?
 def get_order(order_id):
     existing_order = session.query(Order).filter_by(order_id=order_id).first()
     if existing_order:
@@ -448,38 +478,141 @@ def get_order(order_id):
     else:
         return "Order not found!"
 
-# Helper function to ensure the deliverers are not added to the database multiple times.
-def find_deliverer(deliverer_id):
-    existing_deliverer = session.query(Deliverer).filter_by(deliverer_id=deliverer_id).first()
-    if existing_deliverer:
-        return existing_deliverer
-    else:
-        return "Deliverer is not found!"
-
 
 ''' CALCULATION & DISCOUNT FUNCTIONS '''
 
-# Function that calculates the price of a regular pizza
+# Function that calculates the price of a pizza
 def calculate_pizza_price(pizza):
-    # SQL query: finds the relevant ingredient cost for our 'ingredient' that belongs to our 'pizza'
-    # and sums all these costs
+    # SQL query: finds the relevant ingredient cost for our 'ingredient' that belongs to our 'pizza' and sums all these costs
     return sum(ingredient.ingredient_cost for ingredient in pizza.ingredients) * decimal.Decimal(1.49)
 
-def get_dietary_status(pizza):
 
-    dietary_status = "vegan"
+# Method to calculate the price of an order (taking discounts into account)
+def calculate_order_price(order):
+    total_price = 0.00  # Initialize total price as a float
 
-    # Iterate through each ingredient to adjust the status
-    for ingredient in pizza.ingredients:
-        if ingredient.dietary_status == "non-vegetarian":
-            return "non-vegetarian"
-        elif ingredient.dietary_status == "vegetarian":
-            dietary_status = "vegetarian"
-    return dietary_status
+    # Calculate the total price for each pizza in the order
+    pizzas_in_order = session.query(PizzaOrder).filter_by(order_id=order.order_id).all()
+    cheapest_pizza_price = 0
+    cheapest_extra_item_price = 0
+
+    # Calculate the total price for each pizza in the order
+    for pizza_order in pizzas_in_order:
+        # Get the pizza details from the Pizza table
+        pizza = session.query(Pizza).filter_by(pizza_id=pizza_order.pizza_id).first()
+        if pizza:
+            # Calculate the cost of this specific pizza and multiply by the quantity
+            pizza_price = float(calculate_pizza_price(pizza))  # Ensure this is a float
+            total_price += float(pizza_price * pizza_order.pizza_amount)  # Convert pizza_order.pizza_amount to float
+
+            # Check if this pizza is the cheapest one
+            if cheapest_pizza_price == 0 or pizza_price < cheapest_pizza_price:
+                cheapest_pizza_price = pizza_price
+
+    # Calculate the total price for each extra item in the order
+    extra_items_in_order = session.query(ExtraItemOrder).filter_by(order_id=order.order_id).all()
+
+    for extra_item_order in extra_items_in_order:
+        # Get the extra item details from the ExtraItem table
+        extra_item = session.query(ExtraItem).filter_by(item_id=extra_item_order.item_id).first()
+        if extra_item:
+            # Add the cost of the extra item multiplied by its quantity
+            total_price += float(extra_item.cost * extra_item_order.item_amount)  # Ensure this is a float
+
+            # Check if this extra item is the cheapest one
+            if cheapest_extra_item_price == 0 or float(extra_item.cost) < cheapest_extra_item_price:
+                cheapest_extra_item_price = float(extra_item.cost)
+
+    # Exclude cheapest pizza and extra item if birthday products are free
+    if order.free_birthday_products:
+        total_price -= cheapest_pizza_price  # Exclude cheapest pizza
+        if cheapest_extra_item_price <= 4:
+            total_price -= cheapest_extra_item_price  # Exclude cheapest extra item if the extra item is a drink (hence the =< 4)
+
+    # Apply discount if applicable
+    if order.discount_applied:
+        total_price *= 0.90  # Apply a 10% discount
+
+    # Ensure the total price does not go below zero
+    total_price = max(total_price, 0.0)
+
+    return total_price
+
+
+#Possibility to add a discount if the discount string is valid
+#TODO: should we not have an if-else statement in case someone fills in an invalid discount string?
+#TODO: can also only be used once!!!
+
+def get_or_create_discount_code(discount_code_string):
+    new_discount_code = DiscountCode(
+        discount_string=discount_code_string
+    )
+    session.add(new_discount_code)
+    session.commit()
+    return  new_discount_code
+
+
+#TODO: what is happening here?
+def remove_discount():
+    current_order_singleton = CurrentOrder()
+    current_order = current_order_singleton.order
+    if not current_order:
+        return
+    current_order.discount_applied = False
+    session.commit()
+
+
+# TODO: what is happening here?
+# Method to apply a discount without a discount code
+def apply_pizza_discount():
+    current_order_singleton = CurrentOrder()
+    current_order = current_order_singleton.order
+
+    if not current_order:
+        return
+    current_order.discount_applied = True
+    session.commit()
+
+
+# Method to apply a discount by providing a valid discount code
+def apply_discount_code(discount_code_entry):
+    discount_code = session.query(DiscountCode).filter_by(discount_string=discount_code_entry).first()
+    if discount_code:
+        current_order_singleton = CurrentOrder()
+        current_order = current_order_singleton.order
+        if not current_order:
+            return
+        current_order.discount_applied = True
+        session.commit()
+
+# Applies a birthday discount to the current order if today is the customer's birthday.
+def apply_birthday_discount():
+    # Get the current customer instance
+    current_customer_singleton = CurrentCustomer()
+    current_customer = current_customer_singleton.customer
+
+    if current_customer:
+        # Get the current date
+        today = datetime.now().date()
+        # Extract the date of birth of the current customer
+        date_of_birth = current_customer.date_of_birth
+
+        # Check if today matches the customer's birthday (ignoring the year)
+        if today.month == date_of_birth.month and today.day == date_of_birth.day:
+            # Access the current order instance
+            current_order_singleton = CurrentOrder()
+            current_order = current_order_singleton.order
+            if current_order:
+                # Apply the birthday discount
+                current_order.free_birthday_products = True
+                # Commit the changes to the database
+                session.commit()
+
+
+#TODO: method to give 10% discount when 10th pizza
 
 # Method to calculate the earnings reports based on different filters
 def calculate_earnings(selected_month, selected_region, selected_gender, selected_age):
-    """Calculate the total earnings and count the orders based on the filter criteria."""
     from datetime import datetime
     from sqlalchemy import func
 
@@ -526,119 +659,3 @@ def calculate_earnings(selected_month, selected_region, selected_gender, selecte
         total_earnings += calculate_order_price(order)
 
     return total_earnings, order_count
-
-# Method to calculate the price of an order (taking discounts into account)
-def calculate_order_price(order):
-    """Calculate the total price of a given order."""
-    total_price = 0.00  # Initialize total price as a float
-
-    # Calculate the total price for each pizza in the order
-    pizzas_in_order = session.query(PizzaOrder).filter_by(order_id=order.order_id).all()
-    cheapest_pizza_price = 0
-    cheapest_extra_item_price = 0
-
-    # Calculate the total price for each pizza in the order
-    for pizza_order in pizzas_in_order:
-        # Get the pizza details from the Pizza table
-        pizza = session.query(Pizza).filter_by(pizza_id=pizza_order.pizza_id).first()
-        if pizza:
-            # Calculate the cost of this specific pizza and multiply by the quantity
-            pizza_price = float(calculate_pizza_price(pizza))  # Ensure this is a float
-            total_price += float(pizza_price * pizza_order.pizza_amount)  # Convert pizza_order.pizza_amount to float
-
-            # Check if this pizza is the cheapest one
-            if cheapest_pizza_price == 0 or pizza_price < cheapest_pizza_price:
-                cheapest_pizza_price = pizza_price
-
-    # Calculate the total price for each extra item in the order
-    extra_items_in_order = session.query(ExtraItemOrder).filter_by(order_id=order.order_id).all()
-
-    for extra_item_order in extra_items_in_order:
-        # Get the extra item details from the ExtraItem table
-        extra_item = session.query(ExtraItem).filter_by(item_id=extra_item_order.item_id).first()
-        if extra_item:
-            # Add the cost of the extra item multiplied by its quantity
-            total_price += float(extra_item.cost * extra_item_order.item_amount)  # Ensure this is a float
-
-            # Check if this extra item is the cheapest one
-            if cheapest_extra_item_price == 0 or float(extra_item.cost) < cheapest_extra_item_price:
-                cheapest_extra_item_price = float(extra_item.cost)
-
-    # Exclude cheapest pizza and extra item if birthday products are free
-    if order.free_birthday_products:
-        total_price -= cheapest_pizza_price  # Exclude cheapest pizza
-        if cheapest_extra_item_price <= 4:
-            total_price -= cheapest_extra_item_price  # Exclude cheapest extra item
-
-    # Apply discount if applicable
-    if order.discount_applied:
-        total_price *= 0.90  # Apply a 10% discount
-
-    # Ensure the total price does not go below zero
-    total_price = max(total_price, 0.0)
-
-    return total_price
-
-# Method to get the total amount of pizzas in an order
-def get_pizza_amount_in_order(order):
-    pizza_orders = session.query(PizzaOrder).filter_by(order_id=order.order_id).all()
-
-    # Sum up the quantity of each pizza in the order
-    total_pizzas = sum(pizza_order.pizza_amount for pizza_order in pizza_orders)
-
-    return total_pizzas
-
-def remove_discount():
-    current_order_singleton = CurrentOrder()
-    current_order = current_order_singleton.order
-
-    if not current_order:
-        return
-    current_order.discount_applied = False
-    session.commit()
-# Method to apply a discount without a discount code
-def apply_pizza_discount():
-    current_order_singleton = CurrentOrder()
-    current_order = current_order_singleton.order
-
-    if not current_order:
-        return
-    current_order.discount_applied = True
-    session.commit()
-
-# Method to apply a discount by providing a valid discount code
-def apply_discount_code(discount_code_entry):
-    discount_code = session.query(DiscountCode).filter_by(discount_string=discount_code_entry).first()
-    if discount_code:
-        current_order_singleton = CurrentOrder()
-        current_order = current_order_singleton.order
-
-        if not current_order:
-            return
-        current_order.discount_applied = True
-        session.commit()
-
-def apply_birthday_discount():
-    """Apply a birthday discount to the current order if today is the customer's birthday."""
-    # Get the current customer instance
-    current_customer_singleton = CurrentCustomer()
-    current_customer = current_customer_singleton.customer
-
-    if current_customer:
-        # Get the current date
-        today = datetime.now().date()
-        # Extract the date of birth of the current customer
-        date_of_birth = current_customer.date_of_birth
-
-        # Check if today matches the customer's birthday (ignoring the year)
-        if today.month == date_of_birth.month and today.day == date_of_birth.day:
-            # Access the current order instance
-            current_order_singleton = CurrentOrder()
-            current_order = current_order_singleton.order
-
-            if current_order:
-                # Apply the birthday discount
-                current_order.free_birthday_products = True
-
-                # Commit the changes to the database
-                session.commit()
